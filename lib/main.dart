@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/app_state_provider.dart';
@@ -8,6 +8,7 @@ import 'screens/eeg_config_screen.dart';
 import 'screens/erp_config_screen.dart';
 import 'screens/ground_truth_log_screen.dart';
 import 'screens/main_shell_screen.dart';
+import 'screens/patient_presets_screen.dart';
 import 'screens/scenario_picker_screen.dart';
 import 'services/ground_truth_service.dart';
 import 'services/session_service.dart';
@@ -55,6 +56,7 @@ class PokidexApp extends StatelessWidget {
         '/eeg-config': (context) => const EegConfigScreen(),
         '/erp-config': (context) => const ErpConfigScreen(),
         '/scenarios': (context) => const ScenarioPickerScreen(),
+        '/patient-presets': (context) => const PatientPresetsScreen(),
         '/connection': (context) => const ConnectionScreen(),
         '/log': (context) => const GroundTruthLogScreen(),
       },

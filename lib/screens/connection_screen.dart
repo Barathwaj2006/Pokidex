@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +17,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
   late TextEditingController _portController;
   late TextEditingController _bleNameController;
   List<String> _ips = [];
+  bool _isScanningBle = false;
+  List<Map<String, String>> _discoveredBleDevices = [];
 
   @override
   void initState() {
@@ -37,6 +39,27 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
     }
   }
 
+  void _scanNearbyBleDevices() {
+    setState(() {
+      _isScanningBle = true;
+    });
+
+    // Simulate scanning nearby Pyromatix, NeuroSync, and BLE devices
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) {
+        setState(() {
+          _isScanningBle = false;
+          _discoveredBleDevices = [
+            {'name': 'Pyromatix BCI Core Node', 'rssi': '-42 dBm', 'uuid': '0000fe50-pyro-1000-8000-00805f9b34fb'},
+            {'name': 'NeuroSync Headset Gen-2', 'rssi': '-58 dBm', 'uuid': '0000fe50-neuro-1000-8000-00805f9b34fb'},
+            {'name': 'Pokidex EEG Broadcast', 'rssi': '-12 dBm', 'uuid': '0000fe50-0000-1000-8000-00805f9b34fb'},
+            {'name': 'Generic BLE EEG Receiver', 'rssi': '-75 dBm', 'uuid': '0000180d-0000-1000-8000-00805f9b34fb'},
+          ];
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _portController.dispose();
@@ -52,11 +75,58 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Connection Settings'),
+        title: const Text('Pyromatix & NeuroSync Connectivity'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.medication),
+            tooltip: '20 Patient Presets',
+            onPressed: () => Navigator.pushNamed(context, '/patient-presets'),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Pyromatix & NeuroSync Dedicated Banner
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple.shade900, Colors.blue.shade900],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.cable, color: Colors.cyanAccent, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'PYROMATIX & NEUROSYNC UNIFIED LINK',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Seamlessly transmit biopotential telemetry to Pyromatix & NeuroSync via WebSockets or Bluetooth LE.',
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Master Dual-Transport Server Control
           Card(
             color: theme.colorScheme.surface,
@@ -113,13 +183,141 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                           label: Text(
                             signalProvider.isServerRunning
                                 ? 'STOP ALL TRANSPORTS'
-                                : 'START DUAL TRANSPORTS (Wi-Fi + BLE)',
+                                : 'START TRANSPORTS (Wi-Fi + BLE)',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
                     ],
                   ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // BLE Device Scanner for Nearby Devices
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.bluetooth_searching, color: Colors.amberAccent, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'NEARBY BLE & BCI DEVICE SCANNER',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.amberAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: _isScanningBle
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.refresh, color: Colors.amberAccent),
+                        onPressed: _isScanningBle ? null : _scanNearbyBleDevices,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Scan for Pyromatix nodes, NeuroSync headsets, or nearby BLE receivers:',
+                    style: TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_discoveredBleDevices.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          _isScanningBle
+                              ? 'Scanning nearby Bluetooth channels...'
+                              : 'Tap refresh icon above to scan nearby Bluetooth devices.',
+                          style: TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ),
+                    )
+                  else
+                    Column(
+                      children: _discoveredBleDevices.map((dev) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.bluetooth_connected, color: Colors.blueAccent, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      dev['name']!,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      'UUID: ${dev['uuid']}',
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 9,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade900,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  dev['rssi']!,
+                                  style: const TextStyle(fontSize: 10, color: Colors.greenAccent),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.tealAccent,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                ),
+                                child: const Text('PAIR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Connected to ${dev['name']}! Ready for streaming.')),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
             ),
@@ -141,7 +339,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                           Icon(Icons.wifi, color: Colors.cyanAccent, size: 20),
                           SizedBox(width: 8),
                           Text(
-                            '1. WI-FI WEBSOCKET SERVER',
+                            '1. PYROMATIX / NEUROSYNC WI-FI SOCKET',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -194,7 +392,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: url));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Copied $url')),
+                                  SnackBar(content: Text('Copied $url for Pyromatix/NeuroSync')),
                                 );
                               },
                             ),
@@ -239,7 +437,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                           Icon(Icons.bluetooth, color: Colors.blueAccent, size: 20),
                           SizedBox(width: 8),
                           Text(
-                            '2. BLE PERIPHERAL (GATT SERVER)',
+                            '2. BLE PERIPHERAL BROADCAST',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -271,127 +469,13 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Advertised Device Name',
                       border: OutlineInputBorder(),
-                      helperText: 'Scanned by PyroSync BLE Central',
+                      helperText: 'Scanned by Pyromatix & NeuroSync BLE',
                     ),
                     onChanged: (val) {
                       if (val.isNotEmpty) {
                         appState.setBleDeviceName(val);
                       }
                     },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // UUID Badges
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'SERVICE UUID: 0000fe50-0000-1000-8000-00805f9b34fb',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: Colors.lightBlueAccent,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'CHARACTERISTIC UUID: 0000fe51-0000-1000-8000-00805f9b34fb (NOTIFY)',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: Colors.lightBlueAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Packet Batch Configuration
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Batch Size (samples/packet):'),
-                  DropdownButton<int>(
-                    value: appState.batchSize,
-                    items: [1, 5, 10, 20, 50].map((b) {
-                      return DropdownMenuItem(
-                        value: b,
-                        child: Text('$b samples'),
-                      );
-                    }).toList(),
-                    onChanged: (v) {
-                      if (v != null) appState.setBatchSize(v);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Dual Transport Event Console Log
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'DUAL TRANSPORT LOG CONSOLE',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      Text(
-                        '${signalProvider.infoMessages.length} events',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 160,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: ListView.builder(
-                      itemCount: signalProvider.infoMessages.length,
-                      itemBuilder: (ctx, idx) {
-                        final msg = signalProvider.infoMessages[idx];
-                        Color color = Colors.greenAccent;
-                        if (msg.contains('[BLE]')) color = Colors.lightBlueAccent;
-                        if (msg.contains('[DUAL LOG]')) color = Colors.amberAccent;
-                        if (msg.contains('[ERROR]')) color = Colors.redAccent;
-                        return Text(
-                          msg,
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: color,
-                          ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),

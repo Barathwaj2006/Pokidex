@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/scenario.dart';
@@ -17,8 +17,13 @@ class SimulationsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Simulations'),
+        title: const Text('Simulations & Signal Inputs'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.medication_liquid, color: Colors.tealAccent),
+            tooltip: '20 Patient Conditions',
+            onPressed: () => Navigator.pushNamed(context, '/patient-presets'),
+          ),
           IconButton(
             icon: const Icon(Icons.dashboard_customize_outlined),
             tooltip: 'Scenario Presets',
@@ -29,6 +34,51 @@ class SimulationsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // Banner for Pyromatix & NeuroSync
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.indigo.shade900.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.indigo.shade300),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.settings_input_component, color: Colors.cyanAccent, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'PYROMATIX & NEUROSYNC INPUT CONTROLLER',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                      Text(
+                        'Tune band amplitudes, frequencies, or apply 20 pre-configured patient conditions directly.',
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.tealAccent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  ),
+                  child: const Text('20 PRESETS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.pushNamed(context, '/patient-presets'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Engine Selector
           Container(
             padding: const EdgeInsets.all(4),
@@ -52,15 +102,6 @@ class SimulationsScreen extends StatelessWidget {
                             ? AppColors.primarySurface
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.button - 2),
-                        boxShadow: appState.activeEngine == ActiveEngine.eeg
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -104,15 +145,6 @@ class SimulationsScreen extends StatelessWidget {
                             ? AppColors.primarySurface
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.button - 2),
-                        boxShadow: appState.activeEngine == ActiveEngine.erp
-                            ? [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -204,63 +236,18 @@ class SimulationsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Quick Presets Horizontal Selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Simulation Presets',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryText,
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/scenarios'),
-                child: const Text('View All'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _PresetChip(
-                  label: 'REST',
-                  scenario: Scenario.rest,
-                  isSelected: appState.currentScenario == Scenario.rest,
-                  onSelect: () => appState.applyScenario(Scenario.rest),
-                ),
-                _PresetChip(
-                  label: 'RELAXED',
-                  scenario: Scenario.relaxed,
-                  isSelected: appState.currentScenario == Scenario.relaxed,
-                  onSelect: () => appState.applyScenario(Scenario.relaxed),
-                ),
-                _PresetChip(
-                  label: 'HIGH LOAD',
-                  scenario: Scenario.highLoad,
-                  isSelected: appState.currentScenario == Scenario.highLoad,
-                  onSelect: () => appState.applyScenario(Scenario.highLoad),
-                ),
-                _PresetChip(
-                  label: 'FATIGUE',
-                  scenario: Scenario.fatigue,
-                  isSelected: appState.currentScenario == Scenario.fatigue,
-                  onSelect: () => appState.applyScenario(Scenario.fatigue),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // Configuration Cards Navigation
           _ConfigOptionTile(
+            icon: Icons.personal_injury,
+            title: '20 Patient Condition Presets',
+            subtitle: 'Epilepsy, ADHD, Alzheimer\'s, Sleep Stages, Depression, etc.',
+            onTap: () => Navigator.pushNamed(context, '/patient-presets'),
+          ),
+          const SizedBox(height: 12),
+          _ConfigOptionTile(
             icon: Icons.tune,
-            title: 'EEG Band & Noise Settings',
-            subtitle: 'Adjust Delta, Theta, Alpha, Beta, Gamma & Artifacts',
+            title: 'Manual Signal & Noise Tuning',
+            subtitle: 'Directly edit Delta, Theta, Alpha, Beta, Gamma & Artifacts',
             onTap: () => Navigator.pushNamed(context, '/eeg-config'),
           ),
           const SizedBox(height: 12),
@@ -271,46 +258,6 @@ class SimulationsScreen extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, '/erp-config'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PresetChip extends StatelessWidget {
-  final String label;
-  final Scenario scenario;
-  final bool isSelected;
-  final VoidCallback onSelect;
-
-  const _PresetChip({
-    required this.label,
-    required this.scenario,
-    required this.isSelected,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onSelect,
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryAccent : AppColors.primarySurface,
-          borderRadius: BorderRadius.circular(AppRadius.chip),
-          border: Border.all(
-            color: isSelected ? AppColors.primaryAccent : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.primaryText,
-          ),
-        ),
       ),
     );
   }
