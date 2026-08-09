@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class StatCard extends StatelessWidget {
@@ -24,7 +24,7 @@ class StatCard extends StatelessWidget {
     final effectiveIconColor = iconColor ?? AppColors.primaryAccent;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.card),
@@ -39,64 +39,73 @@ class StatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: effectiveIconColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.chip),
                 ),
-                child: Icon(icon, size: 18, color: effectiveIconColor),
+                child: Icon(icon, size: 16, color: effectiveIconColor),
               ),
               if (subtitle != null)
-                Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.mutedText,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    subtitle!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.mutedText,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: AppColors.secondaryText,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryText,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              if (unit != null) ...[
-                const SizedBox(width: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
                 Text(
-                  unit!,
+                  value,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.secondaryText,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryText,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                if (unit != null) ...[
+                  const SizedBox(width: 3),
+                  Text(
+                    unit!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.secondaryText,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ],
       ),

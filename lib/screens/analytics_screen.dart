@@ -1,4 +1,4 @@
-import 'package:fl_chart/fl_chart.dart';
+﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -16,7 +16,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics & Activity'),
@@ -206,7 +205,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.15,
             children: const [
               StatCard(
                 icon: Icons.waves,

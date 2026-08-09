@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_state_provider.dart';
@@ -12,6 +12,108 @@ import '../widgets/waveform_chart.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  void _showProfileModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.primarySurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade600,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: AppColors.softBlue,
+                    child: const Icon(
+                      Icons.person,
+                      size: 48,
+                      color: AppColors.primaryAccent,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.tealAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.verified, size: 16, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Barathwaj R.',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryText,
+                ),
+              ),
+              const Text(
+                'Lead Neural BCI Engineer',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.secondaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryBackground,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: const [
+                    _ProfileStatItem(title: 'Target Engine', value: 'Pyromatix & NeuroSync'),
+                    _ProfileStatItem(title: 'Data Channels', value: '4 CH (EEG/VEP)'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Manage Pyromatix & NeuroSync Node Settings'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pushNamed(context, '/connection');
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
@@ -22,35 +124,40 @@ class HomeScreen extends StatelessWidget {
         titleSpacing: 20,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.softBlue,
-              child: const Icon(
-                Icons.person,
-                size: 20,
-                color: AppColors.primaryAccent,
+            GestureDetector(
+              onTap: () => _showProfileModal(context),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.softBlue,
+                child: const Icon(
+                  Icons.person,
+                  size: 20,
+                  color: AppColors.primaryAccent,
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Good morning, Researcher',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryText,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Good morning, Researcher',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryText,
+                    ),
                   ),
-                ),
-                Text(
-                  'Pokidex Neural Platform',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.secondaryText,
+                  Text(
+                    'Pokidex Neural Platform',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.secondaryText,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -154,7 +261,7 @@ class HomeScreen extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.15,
             children: [
               StatCard(
                 icon: Icons.memory,
@@ -166,7 +273,7 @@ class HomeScreen extends StatelessWidget {
               StatCard(
                 icon: Icons.graphic_eq,
                 label: 'Noise Percent',
-                value: '${appState.eegConfig.noisePercent.toStringAsFixed(1)}',
+                value: appState.eegConfig.noisePercent.toStringAsFixed(1),
                 unit: '%',
                 subtitle: 'Pink+White',
                 iconColor: AppColors.warning,
@@ -306,6 +413,30 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileStatItem extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _ProfileStatItem({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryText),
+        ),
+      ],
     );
   }
 }
