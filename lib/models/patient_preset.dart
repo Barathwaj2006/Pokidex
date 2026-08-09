@@ -30,6 +30,7 @@ class PatientConditionPreset {
 }
 
 final List<PatientConditionPreset> kPatientPresets = [
+  // 1. Normal Awake Resting
   PatientConditionPreset(
     id: 'p01',
     title: 'Normal Awake Resting (Eyes Closed)',
@@ -47,6 +48,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1200.0),
   ),
+
+  // 2. Focused Attention / Meditation
   PatientConditionPreset(
     id: 'p02',
     title: 'Deep Focused State / Meditation',
@@ -64,6 +67,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1000.0),
   ),
+
+  // 3. Focal Temporal Epilepsy (Interictal)
   PatientConditionPreset(
     id: 'p03',
     title: 'Epilepsy - Interictal Spikes',
@@ -81,6 +86,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 20.0),
   ),
+
+  // 4. Absence Seizure Activity
   PatientConditionPreset(
     id: 'p04',
     title: 'Absence Seizure (3Hz Spike-Wave)',
@@ -98,6 +105,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 25.0),
   ),
+
+  // 5. Early-Stage Alzheimer\'s Disease
   PatientConditionPreset(
     id: 'p05',
     title: 'Alzheimer\'s Disease (Mild Cognitive Impairment)',
@@ -113,8 +122,10 @@ final List<PatientConditionPreset> kPatientPresets = [
       noisePercent: 8.0,
       artifacts: ArtifactConfig(eyeBlink: true),
     ),
-    erpConfig: ErpConfig(p300: ErpComponentConfig(name: 'P300', latencyMs: 380.0, amplitudeUv: 3.0, sigmaMs: 40.0)),
+    erpConfig: ErpConfig(p100: ErpComponentConfig(name: 'P100', latencyMs: 120.0, amplitudeUv: 3.0, sigmaMs: 30.0)),
   ),
+
+  // 6. Major Depressive Disorder (MDD)
   PatientConditionPreset(
     id: 'p06',
     title: 'Major Depressive Disorder (Alpha Asymmetry)',
@@ -132,6 +143,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1400.0),
   ),
+
+  // 7. ADHD (Inattentive Subtype)
   PatientConditionPreset(
     id: 'p07',
     title: 'ADHD (Elevated Theta/Beta Ratio)',
@@ -147,8 +160,10 @@ final List<PatientConditionPreset> kPatientPresets = [
       noisePercent: 9.0,
       artifacts: ArtifactConfig(eyeBlink: true, emg: true),
     ),
-    erpConfig: ErpConfig(p300: ErpComponentConfig(name: 'P300', latencyMs: 350.0, amplitudeUv: 4.0, sigmaMs: 35.0)),
+    erpConfig: ErpConfig(p100: ErpComponentConfig(name: 'P100', latencyMs: 115.0, amplitudeUv: 4.0, sigmaMs: 25.0)),
   ),
+
+  // 8. Generalized Anxiety Disorder (GAD)
   PatientConditionPreset(
     id: 'p08',
     title: 'Generalized Anxiety (Hyper-Beta Activity)',
@@ -166,9 +181,11 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 900.0),
   ),
+
+  // 9. Severe Parkinson\'s Disease
   PatientConditionPreset(
     id: 'p09',
-    title: 'Severe Parkinson\'s Disease',
+    title: 'Parkinson\'s Disease (Motor Tremor Artifacts)',
     category: 'Neurological',
     medicalDescription: 'Increased beta band burst oscillations along with resting motor tremor artifacts (4-6Hz).',
     clinicalSignature: 'Beta synchronized bursts, High EMG/Tremor noise.',
@@ -183,6 +200,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 15.0),
   ),
+
+  // 10. Traumatic Brain Injury (TBI)
   PatientConditionPreset(
     id: 'p10',
     title: 'Traumatic Brain Injury (Focal Slow Wave)',
@@ -198,8 +217,10 @@ final List<PatientConditionPreset> kPatientPresets = [
       noisePercent: 10.0,
       artifacts: ArtifactConfig(eyeBlink: true),
     ),
-    erpConfig: ErpConfig(p300: ErpComponentConfig(name: 'P300', latencyMs: 390.0, amplitudeUv: 2.5, sigmaMs: 45.0)),
+    erpConfig: ErpConfig(p100: ErpComponentConfig(name: 'P100', latencyMs: 125.0, amplitudeUv: 2.5, sigmaMs: 35.0)),
   ),
+
+  // 11. Stage 3 NREM Sleep (Deep Slow-Wave)
   PatientConditionPreset(
     id: 'p11',
     title: 'Stage N3 Sleep (Slow-Wave Delta Sleep)',
@@ -217,6 +238,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 2000.0),
   ),
+
+  // 12. REM Sleep (Rapid Eye Movement)
   PatientConditionPreset(
     id: 'p12',
     title: 'REM Sleep (Rapid Eye Movement)',
@@ -234,6 +257,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 18.0),
   ),
+
+  // 13. Acute Ischemic Stroke
   PatientConditionPreset(
     id: 'p13',
     title: 'Acute Ischemic Stroke (Polymorphic Delta)',
@@ -251,6 +276,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 30.0),
   ),
+
+  // 14. Chronic Schizophrenia
   PatientConditionPreset(
     id: 'p14',
     title: 'Schizophrenia (Reduced Gamma Oscillations)',
@@ -266,8 +293,10 @@ final List<PatientConditionPreset> kPatientPresets = [
       noisePercent: 9.0,
       artifacts: ArtifactConfig(eyeBlink: true),
     ),
-    erpConfig: ErpConfig(p300: ErpComponentConfig(name: 'P300', latencyMs: 360.0, amplitudeUv: 2.8, sigmaMs: 38.0)),
+    erpConfig: ErpConfig(p100: ErpComponentConfig(name: 'P100', latencyMs: 110.0, amplitudeUv: 2.8, sigmaMs: 22.0)),
   ),
+
+  // 15. Severe Cognitive Fatigue (Burnout)
   PatientConditionPreset(
     id: 'p15',
     title: 'Severe Mental Fatigue / Burnout',
@@ -285,6 +314,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1500.0),
   ),
+
+  // 16. Anesthesia - Propofol Induced Sedation
   PatientConditionPreset(
     id: 'p16',
     title: 'Propofol Sedation (Frontal Alpha Hypersynchrony)',
@@ -302,6 +333,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1800.0),
   ),
+
+  // 17. Migraine Aura Phase
   PatientConditionPreset(
     id: 'p17',
     title: 'Migraine Aura (Cortical Spreading Depression)',
@@ -319,6 +352,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 12.0),
   ),
+
+  // 18. Chronic Insomnia Disorder
   PatientConditionPreset(
     id: 'p18',
     title: 'Chronic Insomnia (Nocturnal Hyper-Arousal)',
@@ -336,6 +371,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(fixedIsiMs: 1100.0),
   ),
+
+  // 19. Hepatic Encephalopathy
   PatientConditionPreset(
     id: 'p19',
     title: 'Hepatic Encephalopathy (Triphasic Waves)',
@@ -353,6 +390,8 @@ final List<PatientConditionPreset> kPatientPresets = [
     ),
     erpConfig: ErpConfig(jitterPercent: 22.0),
   ),
+
+  // 20. Essential Tremor Syndrome
   PatientConditionPreset(
     id: 'p20',
     title: 'Essential Tremor (Action Tremor Artifacts)',

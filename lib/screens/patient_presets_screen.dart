@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../models/patient_preset.dart';
 import '../providers/app_state_provider.dart';
-import '../providers/signal_provider.dart';
-import '../theme/app_theme.dart';
 
 class PatientPresetsScreen extends StatefulWidget {
   const PatientPresetsScreen({super.key});
@@ -26,7 +24,6 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
-    final signalProvider = context.watch<SignalProvider>();
 
     final filteredPresets = kPatientPresets.where((p) {
       final matchesCat = _selectedCategory == 'All' || p.category == _selectedCategory;
@@ -248,8 +245,8 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             onPressed: () {
-                              appState.setEegConfig(preset.eegConfig);
-                              appState.setErpConfig(preset.erpConfig);
+                              appState.updateEegConfig(preset.eegConfig);
+                              appState.updateErpConfig(preset.erpConfig);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('Applied "${preset.title}" to Pyromatix & NeuroSync inputs!'),
