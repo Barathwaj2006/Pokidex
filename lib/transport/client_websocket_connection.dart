@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -46,7 +46,7 @@ class ClientWebSocketConnection {
     }
 
     _setStep(ConnectionStateStep.handshaking);
-    _messageController.add('Initiating mutual handshake...');
+    _messageController.add('Initiating mutual handshake with PyroSync...');
 
     final handshakeCompleter = Completer<bool>();
 
@@ -69,22 +69,13 @@ class ClientWebSocketConnection {
       cancelOnError: false,
     );
 
-    _sendJson({
-      'type': 'HELLO',
-      'protocol': payload.protocol,
-      'version': payload.version,
-      'session_id': payload.sessionId,
-      'token': payload.token,
-      'source': 'pokidex',
-    });
-
     try {
       final success = await handshakeCompleter.future.timeout(const Duration(seconds: 6));
       return success;
     } catch (_) {
       if (!handshakeCompleter.isCompleted) {
         _setStep(ConnectionStateStep.handshakeFailed);
-        _messageController.add('Handshake timed out waiting for PyroSync ACK.');
+        _messageController.add('Handshake timed out waiting for PyroSync verification.');
         _disconnectSocket();
       }
       return false;
@@ -95,22 +86,38 @@ class ClientWebSocketConnection {
     try {
       final json = jsonDecode(data.toString()) as Map<String, dynamic>;
       final type = json['type'] as String?;
+      final action = json['action'] as String?;
 
-      if (type == 'HELLO_ACK' || type == 'HELLO') {
-        _sendJson({'type': 'HELLO_ACK', 'session_id': payload.sessionId});
-      } else if (type == 'SESSION_ACCEPTED') {
-        _sendJson({'type': 'READY', 'session_id': payload.sessionId});
-      } else if (type == 'START_STREAM') {
+      final isHandshake = type == 'handshake';
+      final effectiveAction = isHandshake ? action : type;
+
+      if (effectiveAction == 'HELLO' || effectiveAction == 'HELLO_ACK') {
+        _sendJson({
+          'type': 'handshake',
+          'action': 'HELLO_ACK',
+          'protocol': payload.protocol,
+          'version': payload.version,
+          'session_id': payload.sessionId,
+          'token': payload.token,
+          'source': 'pokidex',
+        });
+      } else if (effectiveAction == 'SESSION_ACCEPTED') {
+        _sendJson({
+          'type': 'handshake',
+          'action': 'READY',
+          'session_id': payload.sessionId,
+        });
+      } else if (effectiveAction == 'START_STREAM') {
         _handshakeComplete = true;
         _setStep(ConnectionStateStep.ready);
-        _messageController.add('✓ PyroSync READY for signal stream');
+        _messageController.add('✓ PyroSync VERIFIED & READY for signal stream');
         if (!handshakeCompleter.isCompleted) {
           handshakeCompleter.complete(true);
         }
-      } else if (type == 'SIGNAL_STREAMING') {
+      } else if (effectiveAction == 'SIGNAL_STREAMING') {
         _setStep(ConnectionStateStep.streaming);
         _messageController.add('✓ SIGNAL STREAMING ACTIVE');
-      } else if (type == 'PING') {
+      } else if (effectiveAction == 'PING') {
         _sendJson({'type': 'PONG'});
       }
     } catch (_) {}
@@ -120,7 +127,8 @@ class ClientWebSocketConnection {
     if (_handshakeComplete) {
       _setStep(ConnectionStateStep.streaming);
       _sendJson({
-        'type': 'SIGNAL_STREAMING',
+        'type': 'handshake',
+        'action': 'SIGNAL_STREAMING',
         'session_id': payload.sessionId,
       });
     }

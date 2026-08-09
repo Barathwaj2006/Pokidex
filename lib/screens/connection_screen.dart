@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
@@ -150,8 +150,9 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
   Widget _buildStatusHeaderCard(BuildContext context, SignalProvider signalProvider, ConnectionStateStep step) {
     Color color = Colors.grey;
-    if (step == ConnectionStateStep.streaming) color = Colors.tealAccent;
-    else if (step.isConnected || step == ConnectionStateStep.ready) color = Colors.greenAccent;
+    if (step == ConnectionStateStep.streaming) {
+      color = Colors.tealAccent;
+    } else if (step.isConnected || step == ConnectionStateStep.ready) color = Colors.greenAccent;
     else if (step == ConnectionStateStep.connecting || step == ConnectionStateStep.handshaking) color = Colors.amberAccent;
     else if (step.isFailure) color = Colors.redAccent;
 
