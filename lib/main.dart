@@ -10,7 +10,6 @@ import 'screens/ground_truth_log_screen.dart';
 import 'screens/main_shell_screen.dart';
 import 'screens/patient_presets_screen.dart';
 import 'screens/scenario_picker_screen.dart';
-import 'screens/splash_screen.dart';
 import 'services/ground_truth_service.dart';
 import 'services/session_service.dart';
 import 'theme/app_theme.dart';
@@ -51,9 +50,8 @@ class PokidexApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.light,
       theme: AppTheme.lightTheme,
-      initialRoute: '/splash',
+      initialRoute: '/',
       routes: {
-        '/splash': (context) => const SplashScreen(),
         '/': (context) => const MainShellScreen(),
         '/eeg-config': (context) => const EegConfigScreen(),
         '/erp-config': (context) => const ErpConfigScreen(),
