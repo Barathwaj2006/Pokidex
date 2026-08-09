@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/app_state_provider.dart';
 import '../providers/signal_provider.dart';
-import '../widgets/status_chip.dart';
 
 class ConnectionScreen extends StatefulWidget {
   const ConnectionScreen({super.key});
@@ -44,8 +43,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
       _isScanningBle = true;
     });
 
-    // Simulate scanning nearby Pyromatix, NeuroSync, and BLE devices
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
         setState(() {
           _isScanningBle = false;
@@ -75,48 +73,40 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pyromatix & NeuroSync Connectivity'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.medication),
-            tooltip: '20 Patient Presets',
-            onPressed: () => Navigator.pushNamed(context, '/patient-presets'),
-          ),
-        ],
+        title: const Text('Device Connection & Transports'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Pyromatix & NeuroSync Dedicated Banner
+          // Banner
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.purple.shade900, Colors.blue.shade900],
+                colors: [Colors.indigo.shade900, Colors.blue.shade900],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.5)),
+              border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.cable, color: Colors.cyanAccent, size: 28),
-                const SizedBox(width: 12),
+                const Icon(Icons.hub, color: Colors.cyanAccent, size: 24),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'PYROMATIX & NEUROSYNC UNIFIED LINK',
+                        'HARDWARE & INTERFACE TRANSPORTS',
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                          letterSpacing: 0.8,
+                          fontSize: 12,
                         ),
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Seamlessly transmit biopotential telemetry to Pyromatix & NeuroSync via WebSockets or Bluetooth LE.',
+                        'Stream live multi-channel signal telemetry via local Wi-Fi Sockets or Bluetooth Low Energy.',
                         style: TextStyle(color: Colors.white70, fontSize: 11),
                       ),
                     ],
@@ -129,18 +119,8 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
 
           // Master Dual-Transport Server Control
           Card(
-            color: theme.colorScheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: signalProvider.isServerRunning
-                    ? Colors.tealAccent
-                    : Colors.grey.shade700,
-                width: 1.5,
-              ),
-            ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -148,47 +128,55 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'DUAL TRANSPORT SERVER CONTROLLER',
+                        'MASTER TRANSPORT CONTROLLER',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       ),
-                      StatusChip(
-                        status: signalProvider.transportStatus,
-                        connectedClients: signalProvider.connectedClientCount,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            if (signalProvider.isServerRunning) {
-                              await signalProvider.stopServer();
-                            } else {
-                              await signalProvider.startServer();
-                              await _loadIps();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: signalProvider.isServerRunning
-                                ? Colors.redAccent
-                                : Colors.tealAccent,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          icon: Icon(signalProvider.isServerRunning
-                              ? Icons.stop
-                              : Icons.play_arrow),
-                          label: Text(
-                            signalProvider.isServerRunning
-                                ? 'STOP ALL TRANSPORTS'
-                                : 'START TRANSPORTS (Wi-Fi + BLE)',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: signalProvider.isServerRunning ? Colors.tealAccent.withValues(alpha: 0.2) : Colors.redAccent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          signalProvider.isServerRunning ? 'SERVER ACTIVE' : 'SERVER IDLE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: signalProvider.isServerRunning ? Colors.tealAccent : Colors.redAccent,
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        if (signalProvider.isServerRunning) {
+                          await signalProvider.stopServer();
+                        } else {
+                          await signalProvider.startServer();
+                          await _loadIps();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: signalProvider.isServerRunning
+                            ? Colors.redAccent
+                            : Colors.tealAccent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      icon: Icon(signalProvider.isServerRunning
+                          ? Icons.stop
+                          : Icons.play_arrow),
+                      label: Text(
+                        signalProvider.isServerRunning
+                            ? 'STOP ALL TRANSPORTS'
+                            : 'START TRANSPORTS (Wi-Fi + BLE)',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -196,10 +184,10 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           ),
           const SizedBox(height: 16),
 
-          // BLE Device Scanner for Nearby Devices
+          // Compact Nearby BLE Scanner Card (Fixed Screen Overflow)
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -208,26 +196,28 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     children: [
                       Row(
                         children: const [
-                          Icon(Icons.bluetooth_searching, color: Colors.amberAccent, size: 20),
+                          Icon(Icons.bluetooth_searching, color: Colors.amberAccent, size: 18),
                           SizedBox(width: 8),
                           Text(
-                            'NEARBY BLE & BCI DEVICE SCANNER',
+                            'NEARBY BLE & BCI SCANNER',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 12,
                               color: Colors.amberAccent,
                             ),
                           ),
                         ],
                       ),
                       IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
                         icon: _isScanningBle
                             ? const SizedBox(
-                                width: 18,
-                                height: 18,
+                                width: 16,
+                                height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Icon(Icons.refresh, color: Colors.amberAccent),
+                            : const Icon(Icons.refresh, color: Colors.amberAccent, size: 20),
                         onPressed: _isScanningBle ? null : _scanNearbyBleDevices,
                       ),
                     ],
@@ -237,86 +227,87 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     'Scan for Pyromatix nodes, NeuroSync headsets, or nearby BLE receivers:',
                     style: TextStyle(fontSize: 11, color: Colors.white70),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   if (_discoveredBleDevices.isEmpty)
                     Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Text(
                           _isScanningBle
                               ? 'Scanning nearby Bluetooth channels...'
-                              : 'Tap refresh icon above to scan nearby Bluetooth devices.',
-                          style: TextStyle(color: Colors.white54, fontSize: 12),
+                              : 'Tap refresh icon to scan for Pyromatix nodes & NeuroSync headsets.',
+                          style: const TextStyle(color: Colors.white54, fontSize: 11),
                         ),
                       ),
                     )
                   else
-                    Column(
-                      children: _discoveredBleDevices.map((dev) {
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.bluetooth_connected, color: Colors.blueAccent, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      dev['name']!,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        color: Colors.white,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _discoveredBleDevices.length,
+                        itemBuilder: (ctx, idx) {
+                          final dev = _discoveredBleDevices[idx];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white10),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.bluetooth, color: Colors.blueAccent, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        dev['name']!,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      'UUID: ${dev['uuid']}',
-                                      style: const TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 9,
-                                        color: Colors.white54,
+                                      Text(
+                                        'UUID: ${dev['uuid']}',
+                                        style: const TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 8,
+                                          color: Colors.white54,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade900,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
+                                Text(
                                   dev['rssi']!,
                                   style: const TextStyle(fontSize: 10, color: Colors.greenAccent),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.tealAccent,
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.tealAccent,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Text('PAIR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Paired with ${dev['name']}! Ready for telemetry streaming.')),
+                                    );
+                                  },
                                 ),
-                                child: const Text('PAIR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Connected to ${dev['name']}! Ready for streaming.')),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                 ],
               ),
@@ -324,10 +315,10 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 1. Wi-Fi WebSocket Server Card
+          // 1. Wi-Fi WebSocket Broadcast Socket
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -336,13 +327,13 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     children: [
                       Row(
                         children: const [
-                          Icon(Icons.wifi, color: Colors.cyanAccent, size: 20),
+                          Icon(Icons.wifi, color: Colors.cyanAccent, size: 18),
                           SizedBox(width: 8),
                           Text(
-                            '1. PYROMATIX / NEUROSYNC WI-FI SOCKET',
+                            '1. WI-FI WEBSOCKET BROADCAST',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 12,
                               color: Colors.cyanAccent,
                             ),
                           ),
@@ -356,43 +347,50 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Spins up a local WebSocket server to stream real-time JSON signal frames over TCP.',
+                    style: TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
                   const SizedBox(height: 8),
                   if (_ips.isEmpty)
                     Text(
                       'No Wi-Fi interface detected or server offline.',
-                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 11),
                     )
                   else
                     ..._ips.map((ip) {
                       final url = 'ws://$ip:${appState.wsPort}';
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.link, size: 16, color: Colors.cyanAccent),
-                            const SizedBox(width: 8),
+                            const Icon(Icons.link, size: 14, color: Colors.cyanAccent),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 url,
                                 style: const TextStyle(
                                   fontFamily: 'monospace',
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.copy, size: 16),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.copy, size: 14),
                               tooltip: 'Copy URL',
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: url));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Copied $url for Pyromatix/NeuroSync')),
+                                  SnackBar(content: Text('Copied $url')),
                                 );
                               },
                             ),
@@ -407,6 +405,7 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     decoration: const InputDecoration(
                       labelText: 'WebSocket Port',
                       border: OutlineInputBorder(),
+                      isDense: true,
                       helperText: 'Default: 8765',
                     ),
                     onChanged: (val) {
@@ -422,10 +421,10 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 2. Bluetooth LE Peripheral Card
+          // 2. Bluetooth LE Peripheral Broadcast
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -434,13 +433,13 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                     children: [
                       Row(
                         children: const [
-                          Icon(Icons.bluetooth, color: Colors.blueAccent, size: 20),
+                          Icon(Icons.bluetooth, color: Colors.blueAccent, size: 18),
                           SizedBox(width: 8),
                           Text(
                             '2. BLE PERIPHERAL BROADCAST',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                              fontSize: 12,
                               color: Colors.blueAccent,
                             ),
                           ),
@@ -454,22 +453,19 @@ class _ConnectionScreenState extends State<ConnectionScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      StatusChip(
-                        status: signalProvider.bleStatus,
-                        connectedClients: signalProvider.bleConnectedCount,
-                      ),
-                    ],
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Simulates an EEG headset, broadcasting bio-potential packets to nearby Bluetooth scanners.',
+                    style: TextStyle(fontSize: 11, color: Colors.white70),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _bleNameController,
                     decoration: const InputDecoration(
                       labelText: 'Advertised Device Name',
                       border: OutlineInputBorder(),
-                      helperText: 'Scanned by Pyromatix & NeuroSync BLE',
+                      isDense: true,
+                      helperText: 'Scanned by BLE receivers',
                     ),
                     onChanged: (val) {
                       if (val.isNotEmpty) {

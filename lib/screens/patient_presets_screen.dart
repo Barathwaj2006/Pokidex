@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/patient_preset.dart';
 import '../providers/app_state_provider.dart';
+import '../widgets/waveform_chart.dart';
 
 class PatientPresetsScreen extends StatefulWidget {
   const PatientPresetsScreen({super.key});
@@ -21,6 +22,28 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
     return ['All', ...cats];
   }
 
+  // Pre-generated sample waveform data for signal visualization preview
+  List<List<double>> _generatePreviewWaveform(PatientConditionPreset preset) {
+    final List<double> ch1 = [];
+    final List<double> ch2 = [];
+
+    final alphaAmp = preset.eegConfig.alpha.amplitude;
+    final thetaAmp = preset.eegConfig.theta.amplitude;
+    final betaAmp = preset.eegConfig.beta.amplitude;
+
+    for (int i = 0; i < 100; i++) {
+      final t = i * 0.05;
+      final val1 = alphaAmp * 0.4 * (i % 8 < 4 ? 1.0 : -1.0) +
+          thetaAmp * 0.3 * (i % 14 < 7 ? 0.8 : -0.8) +
+          betaAmp * 0.2 * (i % 4 < 2 ? 0.5 : -0.5);
+      final val2 = val1 * 0.85 + (i % 6 < 3 ? 2.0 : -2.0);
+
+      ch1.add(val1);
+      ch2.add(val2);
+    }
+    return [ch1, ch2];
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
@@ -36,27 +59,14 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('20 Patient Condition Presets'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flash_on, color: Colors.amberAccent),
-            tooltip: 'Pyromatix & NeuroSync Dedicated Mode',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Target Suite: Optimized for Pyromatix & NeuroSync BCI Data Channels'),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
-          // Banner for Pyromatix & NeuroSync BCI integration
+          // Banner Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.indigo.shade900.withValues(alpha: 0.8),
+            color: Colors.indigo.shade900.withValues(alpha: 0.9),
             child: Row(
               children: const [
                 Icon(Icons.psychology, color: Colors.cyanAccent, size: 24),
@@ -66,7 +76,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'PYROMATIX & NEUROSYNC PATIENT SUITE',
+                        'BIOMEDICAL SIGNAL SIMULATIONS',
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
@@ -76,7 +86,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Select from 20 clinically accurate biopotential waveforms for BCI evaluation.',
+                        'Tap "USE THIS SIMULATION" to immediately feed any patient waveform into Pokidex.',
                         style: TextStyle(color: Colors.white70, fontSize: 11),
                       ),
                     ],
@@ -86,7 +96,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
             ),
           ),
 
-          // Search & Category Filter
+          // Search & Category Filter Chips
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -140,8 +150,10 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                     appState.eegConfig.alpha.amplitude == preset.eegConfig.alpha.amplitude &&
                     appState.eegConfig.theta.amplitude == preset.eegConfig.theta.amplitude;
 
+                final previewBuffer = _generatePreviewWaveform(preset);
+
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 12),
                   elevation: isCurrent ? 4 : 1,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -181,7 +193,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text(
-                                  'ACTIVE INPUT',
+                                  'ACTIVE SIMULATION',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
@@ -205,7 +217,44 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                           preset.medicalDescription,
                           style: const TextStyle(fontSize: 12, color: Colors.white70),
                         ),
+                        const SizedBox(height: 10),
+
+                        // Signal Waveform Visual Representation
+                        Container(
+                          height: 70,
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Stack(
+                            children: [
+                              WaveformChart(channelData: previewBuffer),
+                              Positioned(
+                                top: 4,
+                                right: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'SIGNAL PATTERN PREVIEW',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 8,
+                                      color: Colors.cyanAccent,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 8),
+
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
@@ -239,9 +288,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                             ),
                             icon: Icon(isCurrent ? Icons.check_circle : Icons.play_arrow),
                             label: Text(
-                              isCurrent
-                                  ? 'LOADED ON PYROMATIX / NEUROSYNC'
-                                  : 'APPLY TO PYROMATIX & NEUROSYNC PIPELINE',
+                              isCurrent ? 'ACTIVE SIMULATION LOADED' : 'USE THIS SIMULATION',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             onPressed: () {
@@ -249,7 +296,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                               appState.updateErpConfig(preset.erpConfig);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Applied "${preset.title}" to Pyromatix & NeuroSync inputs!'),
+                                  content: Text('Switched active simulation to "${preset.title}"!'),
                                   backgroundColor: Colors.teal,
                                 ),
                               );

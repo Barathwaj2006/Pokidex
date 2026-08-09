@@ -1,6 +1,8 @@
 ﻿import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/app_state_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/stat_card.dart';
 
@@ -14,17 +16,56 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _selectedPeriod = 1; // 0: DAY, 1: WEEK, 2: MONTH
 
+  List<FlSpot> _getChartData() {
+    if (_selectedPeriod == 0) {
+      return const [
+        FlSpot(0, 10),
+        FlSpot(4, 15),
+        FlSpot(8, 22),
+        FlSpot(12, 35),
+        FlSpot(16, 28),
+        FlSpot(20, 18),
+        FlSpot(24, 12),
+      ];
+    } else if (_selectedPeriod == 1) {
+      return const [
+        FlSpot(0, 12),
+        FlSpot(1, 18),
+        FlSpot(2, 14),
+        FlSpot(3, 28),
+        FlSpot(4, 22),
+        FlSpot(5, 34),
+        FlSpot(6, 30),
+      ];
+    } else {
+      return const [
+        FlSpot(0, 8),
+        FlSpot(1, 22),
+        FlSpot(2, 38),
+        FlSpot(3, 45),
+      ];
+    }
+  }
+
+  String _getAveragePower() {
+    if (_selectedPeriod == 0) return '20.4 µV²/Hz';
+    if (_selectedPeriod == 1) return '23.1 µV²/Hz';
+    return '28.2 µV²/Hz';
+  }
+
+  String _getChangeText() {
+    if (_selectedPeriod == 0) return '+1.8%';
+    if (_selectedPeriod == 1) return '+4.2%';
+    return '+9.5%';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppStateProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics & Activity'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -58,7 +99,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Primary Activity Chart Card
+          // Primary Dynamic Activity Chart Card
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -74,8 +115,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'Spectral Power Density',
                           style: TextStyle(
                             fontSize: 13,
@@ -83,10 +124,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          '14.2 µV²/Hz',
-                          style: TextStyle(
+                          _getAveragePower(),
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primaryText,
@@ -100,13 +141,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         color: AppColors.softBlue,
                         borderRadius: BorderRadius.circular(AppRadius.chip),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.trending_up, size: 14, color: AppColors.primaryAccent),
-                          SizedBox(width: 4),
+                          const Icon(Icons.trending_up, size: 14, color: AppColors.primaryAccent),
+                          const SizedBox(width: 4),
                           Text(
-                            '+4.2%',
-                            style: TextStyle(
+                            _getChangeText(),
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primaryAccent,
@@ -139,19 +180,40 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           sideTitles: SideTitles(
                             showTitles: true,
                             getTitlesWidget: (val, meta) {
-                              const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                              final idx = val.toInt();
-                              if (idx >= 0 && idx < days.length) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(
-                                    days[idx],
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.mutedText,
+                              if (_selectedPeriod == 0) {
+                                final hour = val.toInt();
+                                if (hour % 4 == 0) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      '$hour:00',
+                                      style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
+                              } else if (_selectedPeriod == 1) {
+                                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                                final idx = val.toInt();
+                                if (idx >= 0 && idx < days.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      days[idx],
+                                      style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                final wk = val.toInt() + 1;
+                                if (wk <= 4) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      'Wk $wk',
+                                      style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
+                                    ),
+                                  );
+                                }
                               }
                               return const SizedBox.shrink();
                             },
@@ -161,15 +223,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       borderData: FlBorderData(show: false),
                       lineBarsData: [
                         LineChartBarData(
-                          spots: const [
-                            FlSpot(0, 12),
-                            FlSpot(1, 18),
-                            FlSpot(2, 14),
-                            FlSpot(3, 28),
-                            FlSpot(4, 22),
-                            FlSpot(5, 34),
-                            FlSpot(6, 30),
-                          ],
+                          spots: _getChartData(),
                           isCurved: true,
                           color: AppColors.primaryAccent,
                           barWidth: 3,
@@ -189,7 +243,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Key Metrics Grid
+          // Dynamic Key Metrics Grid
           const Text(
             'Key Metrics',
             style: TextStyle(
@@ -206,43 +260,43 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
             childAspectRatio: 1.15,
-            children: const [
+            children: [
               StatCard(
                 icon: Icons.waves,
-                label: 'Alpha Dominance',
-                value: '35.0',
+                label: 'Alpha Power',
+                value: appState.eegConfig.alpha.amplitude.toStringAsFixed(1),
                 unit: 'µV',
-                subtitle: '10.0 Hz',
+                subtitle: '${appState.eegConfig.alpha.frequency} Hz',
               ),
               StatCard(
                 icon: Icons.timer_outlined,
                 label: 'P100 Latency',
-                value: '100.0',
+                value: appState.erpConfig.p100.latencyMs.toStringAsFixed(1),
                 unit: 'ms',
-                subtitle: '±5% jitter',
+                subtitle: '±${appState.erpConfig.jitterPercent.toInt()}% jitter',
                 iconColor: AppColors.secondaryBlue,
               ),
               StatCard(
                 icon: Icons.graphic_eq,
-                label: 'Signal-to-Noise',
-                value: '18.4',
-                unit: 'dB',
-                subtitle: 'Clean',
+                label: 'Signal Noise',
+                value: appState.eegConfig.noisePercent.toStringAsFixed(1),
+                unit: '%',
+                subtitle: appState.eegConfig.noisePercent < 8.0 ? 'Clean' : 'Noisy',
                 iconColor: AppColors.success,
               ),
               StatCard(
                 icon: Icons.memory,
                 label: 'Channel Density',
-                value: '4',
+                value: '${appState.eegConfig.channelCount}',
                 unit: 'CH',
-                subtitle: '250 Hz',
+                subtitle: '${appState.eegConfig.samplingRate} Hz',
                 iconColor: AppColors.warning,
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-          // Activity & Sessions List
+          // Activity & Interactive Sessions List
           const Text(
             'Recent Sessions',
             style: TextStyle(
@@ -256,22 +310,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           _SessionRow(
             title: 'Eyes-Closed Rest Simulation',
             time: '09:00 AM – 09:15 AM',
-            engine: 'EEG',
+            engine: 'EEG Engine',
             isCompleted: true,
+            onTap: () {
+              Navigator.pushNamed(context, '/eeg-config');
+            },
           ),
           const SizedBox(height: 8),
           _SessionRow(
             title: 'Visual Evoked Potential Trial #14',
             time: '10:30 AM – 10:45 AM',
-            engine: 'ERP / VEP',
+            engine: 'ERP / VEP Engine',
             isCompleted: true,
+            onTap: () {
+              Navigator.pushNamed(context, '/erp-config');
+            },
           ),
           const SizedBox(height: 8),
           _SessionRow(
-            title: 'Cognitive Load Preset - High Load',
+            title: 'Cognitive Load & Patient Preset',
             time: '02:00 PM – 02:30 PM',
-            engine: 'Scenario',
+            engine: 'Patient Presets',
             isCompleted: false,
+            onTap: () {
+              Navigator.pushNamed(context, '/patient-presets');
+            },
           ),
         ],
       ),
@@ -300,15 +363,6 @@ class _PeriodTab extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primarySurface : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.button - 2),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
           ),
           child: Text(
             label,
@@ -330,69 +384,74 @@ class _SessionRow extends StatelessWidget {
   final String time;
   final String engine;
   final bool isCompleted;
+  final VoidCallback onTap;
 
   const _SessionRow({
     required this.title,
     required this.time,
     required this.engine,
     required this.isCompleted,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: isCompleted
-                  ? AppColors.softBlue
-                  : AppColors.secondaryBackground,
-              borderRadius: BorderRadius.circular(AppRadius.chip),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primarySurface,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isCompleted
+                    ? AppColors.softBlue
+                    : AppColors.secondaryBackground,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+              ),
+              child: Icon(
+                isCompleted ? Icons.check_circle : Icons.hourglass_top,
+                size: 20,
+                color: isCompleted ? AppColors.primaryAccent : AppColors.mutedText,
+              ),
             ),
-            child: Icon(
-              isCompleted ? Icons.check_circle : Icons.hourglass_top,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$time • $engine',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right,
               size: 20,
-              color: isCompleted ? AppColors.primaryAccent : AppColors.mutedText,
+              color: AppColors.mutedText,
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryText,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$time • $engine',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.secondaryText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            size: 20,
-            color: AppColors.mutedText,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
