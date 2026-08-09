@@ -1,15 +1,19 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import '../engines/eeg_engine.dart';
 import '../engines/erp_engine.dart';
 import '../engines/signal_engine.dart';
+import '../models/connection_state_step.dart';
 import '../models/eeg_config.dart';
+import '../models/qr_pairing_payload.dart';
 import '../models/signal_frame.dart';
+import '../models/transmission_diagnostics.dart';
 import '../services/ground_truth_service.dart';
 import '../services/session_service.dart';
 import '../transport/ble_peripheral_transport.dart';
+import '../transport/client_websocket_connection.dart';
 import '../transport/multi_signal_transport.dart';
 import '../transport/signal_transport.dart';
 import '../transport/websocket_transport.dart';
@@ -25,13 +29,35 @@ class SignalProvider extends ChangeNotifier {
   WebSocketTransport? _wifiTransport;
   BlePeripheralTransport? _bleTransport;
 
+  ClientWebSocketConnection? _clientConnection;
+  QrPairingPayload? _activeQrPayload;
+
   StreamSubscription<SignalFrame>? _engineSub;
+  StreamSubscription<ConnectionStateStep>? _connectionStepSub;
+
+  ConnectionStateStep _connectionStep = ConnectionStateStep.idle;
+  ConnectionStateStep get connectionStep => _connectionStep;
+
+  String? _qrError;
+  String? get qrError => _qrError;
 
   static const _bufferSize = 500;
   final List<List<double>> _waveformBuffer = [];
   int _channelCount = 4;
 
-  int _packetCount = 0;
+  // Diagnostics & Queue Monitoring
+  int _framesGenerated = 0;
+  int _framesSent = 0;
+  int _framesFailed = 0;
+  int _errorCount = 0;
+  int _lastSequenceNumber = 0;
+  static const int maxQueueDepth = 50;
+  final List<SignalFrame> _sendQueue = [];
+
+  double _actualGenRate = 0.0;
+  double _actualTxRate = 0.0;
+  int _genTicksCount = 0;
+  int _txTicksCount = 0;
   Timer? _rateTimer;
 
   TransportStatus _transportStatus = TransportStatus.stopped;
@@ -39,8 +65,6 @@ class SignalProvider extends ChangeNotifier {
 
   final List<String> _infoMessages = [];
   List<String> get infoMessages => List.unmodifiable(_infoMessages);
-
-  final List<SignalFrame> _batchBuffer = [];
 
   ErpEngine? _erpEngine;
 
@@ -52,25 +76,100 @@ class SignalProvider extends ChangeNotifier {
 
   List<List<double>> get waveformBuffer => _waveformBuffer;
   int get channelCount => _channelCount;
+  QrPairingPayload? get activeQrPayload => _activeQrPayload;
 
   bool get isServerRunning =>
       _transportStatus != TransportStatus.stopped &&
       _transportStatus != TransportStatus.error;
 
   int get connectedClientCount =>
-      _multiTransport?.connectedClientCount ?? 0;
+      (_multiTransport?.connectedClientCount ?? 0) +
+      (_clientConnection?.isConnected == true ? 1 : 0);
 
-  TransportStatus get wifiStatus =>
-      _wifiTransport?.status ?? TransportStatus.stopped;
+  bool get isVerifiedConnected =>
+      _clientConnection?.isReady == true ||
+      _clientConnection?.isStreaming == true ||
+      (_multiTransport?.connectedClientCount ?? 0) > 0;
 
-  TransportStatus get bleStatus =>
-      _bleTransport?.status ?? TransportStatus.stopped;
+  bool get isStreamingSignal => appState.isStreaming;
 
-  int get wifiConnectedCount =>
-      _wifiTransport?.connectedClientCount ?? 0;
+  TransmissionDiagnostics get diagnostics {
+    final totalGen = _framesGenerated == 0 ? 1 : _framesGenerated;
+    return TransmissionDiagnostics(
+      configuredSamplingRate: appState.eegConfig.samplingRate,
+      actualGenerationRate: _actualGenRate,
+      actualTransmissionRate: _actualTxRate,
+      framesGenerated: _framesGenerated,
+      framesSent: _framesSent,
+      framesFailed: _framesFailed,
+      sendQueueDepth: _sendQueue.length,
+      lastSequenceNumber: _lastSequenceNumber,
+      errorCount: _errorCount,
+      droppedFramePercent: (_framesFailed / totalGen) * 100.0,
+    );
+  }
 
-  int get bleConnectedCount =>
-      _bleTransport?.connectedClientCount ?? 0;
+  // ==========================================
+  // QR PAIRING & CLIENT CONNECTION FLOW
+  // ==========================================
+
+  void resetConnectionState() {
+    _qrError = null;
+    _setConnectionStep(ConnectionStateStep.idle);
+  }
+
+  Future<bool> processScannedQr(String rawQrJson) async {
+    _qrError = null;
+    _setConnectionStep(ConnectionStateStep.qrScanner);
+
+    final validation = QrPairingPayload.parseAndValidate(rawQrJson);
+    if (!validation.isValid) {
+      _qrError = validation.errorMessage;
+      _setConnectionStep(ConnectionStateStep.qrInvalid);
+      _logInfo('[QR ERROR] $_qrError');
+      return false;
+    }
+
+    _activeQrPayload = validation.payload!;
+    _setConnectionStep(ConnectionStateStep.qrValidated);
+    _logInfo('[QR SUCCESS] Validated payload for session ${_activeQrPayload!.sessionId}');
+    return true;
+  }
+
+  Future<bool> connectToPairingPayload() async {
+    if (_activeQrPayload == null) return false;
+
+    _clientConnection?.dispose();
+    _clientConnection = ClientWebSocketConnection(payload: _activeQrPayload!);
+
+    _connectionStepSub?.cancel();
+    _connectionStepSub = _clientConnection!.stepStream.listen((step) {
+      _setConnectionStep(step);
+    });
+
+    _clientConnection!.messageStream.listen((msg) {
+      _logInfo('[PAIRING] $msg');
+    });
+
+    final success = await _clientConnection!.connectAndHandshake();
+    if (success) {
+      _logInfo('[CONNECTED] PyroSync Handshake Complete & Verified Ready.');
+      await startStreaming();
+    }
+    return success;
+  }
+
+  void disconnectPairing() {
+    stopStreaming();
+    _clientConnection?.disconnect();
+    _clientConnection = null;
+    _activeQrPayload = null;
+    _setConnectionStep(ConnectionStateStep.idle);
+  }
+
+  // ==========================================
+  // MULTI-TRANSPORT SERVER LIFECYCLE
+  // ==========================================
 
   Future<void> startServer() async {
     _multiTransport?.dispose();
@@ -90,11 +189,7 @@ class SignalProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    _multiTransport!.infoStream.listen((msg) {
-      _infoMessages.add(msg);
-      if (_infoMessages.length > 300) _infoMessages.removeAt(0);
-      notifyListeners();
-    });
+    _multiTransport!.infoStream.listen((msg) => _logInfo(msg));
 
     await _multiTransport!.start();
     notifyListeners();
@@ -110,8 +205,20 @@ class SignalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ==========================================
+  // SIGNAL STREAMING ENGINE LIFECYCLE
+  // ==========================================
+
   Future<void> startStreaming() async {
     if (appState.isStreaming) return;
+
+    // Reset counters & session
+    _framesGenerated = 0;
+    _framesSent = 0;
+    _framesFailed = 0;
+    _errorCount = 0;
+    _lastSequenceNumber = 0;
+    _sendQueue.clear();
 
     sessionService.resetSession();
     sessionService.markStart();
@@ -139,6 +246,7 @@ class SignalProvider extends ChangeNotifier {
       _erpEngine = erpEng;
     }
 
+    // Broadcast Initial Metadata Contract Frame
     final metadata = SignalFrameMetadata(
       source: 'pokidex',
       signalType: appState.activeEngine == ActiveEngine.eeg
@@ -150,10 +258,15 @@ class SignalProvider extends ChangeNotifier {
       unit: 'uV',
       sessionId: sessionService.sessionId,
     );
-    await _multiTransport?.send(SignalFrame(metadata: metadata));
+
+    final metaFrame = SignalFrame(metadata: metadata);
+    _dispatchFrame(metaFrame);
 
     _engineSub = _engine!.frames.listen(_onFrame);
     _engine!.start();
+
+    _clientConnection?.notifyStreamStarted();
+    _setConnectionStep(ConnectionStateStep.streaming);
 
     _startRateTimer();
     appState.setStreaming(true);
@@ -161,7 +274,11 @@ class SignalProvider extends ChangeNotifier {
   }
 
   void _onFrame(SignalFrame frame) {
+    _framesGenerated++;
+    _genTicksCount++;
+
     if (frame.data != null) {
+      _lastSequenceNumber = frame.data!.sequence;
       final samples = frame.data!.channelSamples;
       for (int ch = 0; ch < samples.length && ch < _channelCount; ch++) {
         _waveformBuffer[ch].add(samples[ch]);
@@ -171,39 +288,70 @@ class SignalProvider extends ChangeNotifier {
       }
     }
 
-    _batchBuffer.add(frame);
-    if (_batchBuffer.length >= appState.batchSize) {
-      _flushBatch();
-    }
+    _dispatchFrame(frame);
   }
 
-  void _flushBatch() {
-    if (_batchBuffer.isEmpty || _multiTransport == null) {
-      _batchBuffer.clear();
-      return;
+  void _dispatchFrame(SignalFrame frame) {
+    bool sentAny = false;
+
+    // Send via active QR pairing client
+    if (_clientConnection?.isConnected == true) {
+      final ok = _clientConnection!.sendFrame(frame);
+      if (ok) {
+        sentAny = true;
+      } else {
+        _framesFailed++;
+        _errorCount++;
+      }
     }
-    for (final f in _batchBuffer) {
-      _multiTransport!.send(f);
-      _packetCount++;
+
+    // Send via server transports (Wi-Fi WebSocket / BLE)
+    if (_multiTransport != null && _multiTransport!.connectedClientCount > 0) {
+      _multiTransport!.send(frame);
+      sentAny = true;
     }
-    _batchBuffer.clear();
-    notifyListeners();
+
+    if (sentAny) {
+      _framesSent++;
+      _txTicksCount++;
+    } else {
+      // Queue frame up to max depth to avoid unlimited memory growth
+      if (_sendQueue.length < maxQueueDepth) {
+        _sendQueue.add(frame);
+      } else {
+        _sendQueue.removeAt(0);
+        _sendQueue.add(frame);
+        _framesFailed++;
+      }
+    }
   }
 
   void _startRateTimer() {
     _rateTimer?.cancel();
+    _genTicksCount = 0;
+    _txTicksCount = 0;
+
     _rateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      appState.setPacketsPerSecond(_packetCount);
-      _packetCount = 0;
+      _actualGenRate = _genTicksCount.toDouble();
+      _actualTxRate = _txTicksCount.toDouble();
+      appState.setPacketsPerSecond(_txTicksCount);
+
+      _genTicksCount = 0;
+      _txTicksCount = 0;
+      notifyListeners();
     });
   }
 
   Future<void> stopStreaming() async {
     _rateTimer?.cancel();
     await _engineSub?.cancel();
-    _flushBatch();
     _engine?.stop();
     appState.setStreaming(false);
+
+    if (_connectionStep == ConnectionStateStep.streaming) {
+      _setConnectionStep(ConnectionStateStep.ready);
+    }
+
     notifyListeners();
   }
 
@@ -218,6 +366,17 @@ class SignalProvider extends ChangeNotifier {
     }
   }
 
+  void _setConnectionStep(ConnectionStateStep step) {
+    _connectionStep = step;
+    notifyListeners();
+  }
+
+  void _logInfo(String msg) {
+    _infoMessages.add(msg);
+    if (_infoMessages.length > 300) _infoMessages.removeAt(0);
+    notifyListeners();
+  }
+
   Future<List<String>> getLocalIps() async {
     if (_wifiTransport == null) return [];
     return _wifiTransport!.getLocalIps();
@@ -227,6 +386,8 @@ class SignalProvider extends ChangeNotifier {
   void dispose() {
     _engine?.dispose();
     _rateTimer?.cancel();
+    _clientConnection?.dispose();
+    _multiTransport?.dispose();
     super.dispose();
   }
 }

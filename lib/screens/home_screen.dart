@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/connection_state_step.dart';
 import '../providers/app_state_provider.dart';
 import '../providers/signal_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hero_card.dart';
 import '../widgets/stat_card.dart';
-import '../widgets/status_chip.dart';
 import '../widgets/waveform_chart.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -34,47 +34,17 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: AppColors.softBlue,
-                    child: const Icon(
-                      Icons.person,
-                      size: 48,
-                      color: AppColors.primaryAccent,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.tealAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.verified, size: 16, color: Colors.black),
-                    ),
-                  ),
-                ],
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.softBlue,
+                child: const Icon(Icons.person, size: 48, color: AppColors.primaryAccent),
               ),
               const SizedBox(height: 12),
               const Text(
                 'Barathwaj R.',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryText,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryText),
               ),
-              const Text(
-                'Lead Neural BCI Engineer',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.secondaryText,
-                ),
-              ),
+              const Text('Biomedical Signal Engineer', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -85,8 +55,8 @@ class HomeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: const [
-                    _ProfileStatItem(title: 'Target Platform', value: 'Pyromatix & NeuroSync'),
-                    _ProfileStatItem(title: 'Data Channels', value: '4 CH (EEG/VEP)'),
+                    _ProfileStatItem(title: 'Signal Engine', value: 'EEG / VEP'),
+                    _ProfileStatItem(title: 'Channels', value: '4 CH (250 Hz)'),
                   ],
                 ),
               ),
@@ -100,7 +70,7 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: const Icon(Icons.settings),
-                  label: const Text('Manage Telemetry & Transports'),
+                  label: const Text('Manage Connectivity'),
                   onPressed: () {
                     Navigator.pop(ctx);
                     Navigator.pushNamed(context, '/connection');
@@ -114,42 +84,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showNotificationsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.notifications_active, color: AppColors.primaryAccent),
-            SizedBox(width: 8),
-            Text('System Notifications'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text('• WebSocket Telemetry server active on port 8765.'),
-            SizedBox(height: 8),
-            Text('• BLE Peripheral broadcast standard active (Pokidex-EEG).'),
-            SizedBox(height: 8),
-            Text('• 20 Patient Condition Presets loaded & calibrated.'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('DISMISS'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppStateProvider>();
     final signalProvider = context.watch<SignalProvider>();
+    final step = signalProvider.connectionStep;
+    final diag = signalProvider.diagnostics;
 
     return Scaffold(
       appBar: AppBar(
@@ -161,11 +101,7 @@ class HomeScreen extends StatelessWidget {
               child: CircleAvatar(
                 radius: 18,
                 backgroundColor: AppColors.softBlue,
-                child: const Icon(
-                  Icons.person,
-                  size: 20,
-                  color: AppColors.primaryAccent,
-                ),
+                child: const Icon(Icons.person, size: 20, color: AppColors.primaryAccent),
               ),
             ),
             const SizedBox(width: 12),
@@ -173,21 +109,8 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text(
-                    'Good morning, Researcher',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryText,
-                    ),
-                  ),
-                  Text(
-                    'Pokidex Neural Platform',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.secondaryText,
-                    ),
-                  ),
+                  Text('Good morning, Researcher', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primaryText)),
+                  Text('Pokidex Neural Platform', style: TextStyle(fontSize: 11, color: AppColors.secondaryText)),
                 ],
               ),
             ),
@@ -195,13 +118,8 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            tooltip: 'Notifications',
-            onPressed: () => _showNotificationsDialog(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_ethernet),
-            tooltip: 'Connection Settings',
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Connect via QR Scanner',
             onPressed: () => Navigator.pushNamed(context, '/connection'),
           ),
           const SizedBox(width: 8),
@@ -210,20 +128,55 @@ class HomeScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Contextual Headline
-          const Text(
-            'Discover your\nsignal progress',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryText,
-              height: 1.25,
-              letterSpacing: -0.5,
+          // Primary Connection Flow Button Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: step == ConnectionStateStep.streaming
+                            ? Colors.tealAccent
+                            : (signalProvider.isVerifiedConnected ? Colors.greenAccent : Colors.grey),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      step.displayLabel,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.tealAccent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text('CONNECT TO PYROSYNC', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () => Navigator.pushNamed(context, '/connection'),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // Prominent Hero Card
           HeroCard(
             title: 'WEEKLY RESEARCH TARGET',
             progressPercent: '84%',
@@ -233,7 +186,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Server Status Bar Card
+          // Compact Clean Signal Quality UI Dashboard (Req #17)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -241,52 +194,38 @@ class HomeScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.card),
               border: Border.all(color: AppColors.border),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                StatusChip(
-                  status: signalProvider.transportStatus,
-                  connectedClients: signalProvider.connectedClientCount,
+                const Text('SYSTEM TELEMETRY SUMMARY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _CompactMetric(title: 'Signal Engine', value: appState.activeEngine.name.toUpperCase()),
+                    _CompactMetric(title: 'Sampling', value: '${diag.configuredSamplingRate} Hz'),
+                    _CompactMetric(title: 'Channels', value: '${signalProvider.channelCount} CH'),
+                    _CompactMetric(title: 'Output', value: 'Wi-Fi'),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  '${appState.packetsPerSecond} pkt/s',
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: AppColors.primaryAccent,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondaryBackground,
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                  child: Text(
-                    appState.activeEngine.name.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.secondaryText,
-                    ),
-                  ),
+                const Divider(height: 20, color: Colors.white10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _CompactMetric(title: 'Connection', value: signalProvider.isVerifiedConnected ? '● Connected' : '● Disconnected'),
+                    _CompactMetric(title: 'Transmission', value: signalProvider.isStreamingSignal ? '● Streaming' : '● Idle'),
+                    _CompactMetric(title: 'Packets', value: '${diag.framesSent}'),
+                    _CompactMetric(title: 'Rate', value: '${diag.actualTransmissionRate.toStringAsFixed(1)} Hz'),
+                    _CompactMetric(title: 'Queue', value: '${diag.sendQueueDepth}'),
+                    _CompactMetric(title: 'Errors', value: '${diag.errorCount}'),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // 2-Column Metric Grid
-          const Text(
-            'Current Metrics',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryText,
-            ),
-          ),
+          const Text('Current Metrics', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.primaryText)),
           const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 2,
@@ -296,168 +235,40 @@ class HomeScreen extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 1.15,
             children: [
-              StatCard(
-                icon: Icons.memory,
-                label: 'Sampling Rate',
-                value: '${appState.eegConfig.samplingRate}',
-                unit: 'Hz',
-                subtitle: 'Real-time',
-              ),
-              StatCard(
-                icon: Icons.graphic_eq,
-                label: 'Noise Percent',
-                value: appState.eegConfig.noisePercent.toStringAsFixed(1),
-                unit: '%',
-                subtitle: 'Pink+White',
-                iconColor: AppColors.warning,
-              ),
-              StatCard(
-                icon: Icons.alt_route,
-                label: 'Channel Density',
-                value: '${appState.eegConfig.channelCount}',
-                unit: 'CH',
-                subtitle: 'Standard',
-                iconColor: AppColors.secondaryBlue,
-              ),
-              StatCard(
-                icon: Icons.hub,
-                label: 'Active Transports',
-                value: 'Dual',
-                subtitle: 'Wi-Fi + BLE',
-                iconColor: AppColors.success,
-              ),
+              StatCard(icon: Icons.memory, label: 'Sampling Rate', value: '${appState.eegConfig.samplingRate}', unit: 'Hz', subtitle: 'Real-time'),
+              StatCard(icon: Icons.graphic_eq, label: 'Noise Percent', value: appState.eegConfig.noisePercent.toStringAsFixed(1), unit: '%', subtitle: 'Pink+White', iconColor: AppColors.warning),
+              StatCard(icon: Icons.alt_route, label: 'Channel Density', value: '${appState.eegConfig.channelCount}', unit: 'CH', subtitle: 'Standard', iconColor: AppColors.secondaryBlue),
+              StatCard(icon: Icons.hub, label: 'Active Transports', value: 'Dual', subtitle: 'Wi-Fi + BLE', iconColor: AppColors.success),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Live Waveform Monitor Card
           Container(
             height: 210,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.darkSurface,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-            ),
+            decoration: BoxDecoration(color: AppColors.darkSurface, borderRadius: BorderRadius.circular(AppRadius.card)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.show_chart, color: Colors.cyanAccent, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'LIVE WAVEFORM MONITOR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${appState.eegConfig.channelCount} CH',
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        color: Colors.white60,
-                        fontSize: 11,
-                      ),
-                    ),
+                    const Row(children: [Icon(Icons.show_chart, color: Colors.cyanAccent, size: 18), SizedBox(width: 8), Text('LIVE WAVEFORM MONITOR', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.8))]),
+                    Text('${appState.eegConfig.channelCount} CH', style: const TextStyle(fontFamily: 'monospace', color: Colors.white60, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: WaveformChart(
-                      channelData: signalProvider.waveformBuffer,
-                    ),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(8)),
+                    child: WaveformChart(channelData: signalProvider.waveformBuffer),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // Manual Trigger Button if ERP mode
-          if (appState.activeEngine == ActiveEngine.erp &&
-              appState.isStreaming) ...[
-            ElevatedButton.icon(
-              onPressed: () {
-                signalProvider.fireManualTrigger();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('VEP Trigger Fired!'),
-                    duration: Duration(milliseconds: 600),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.warning,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              icon: const Icon(Icons.touch_app),
-              label: const Text(
-                'MANUAL VEP TRIGGER',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
         ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: ElevatedButton.icon(
-          onPressed: () async {
-            if (appState.isStreaming) {
-              await signalProvider.stopStreaming();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Stopped signal streaming.')),
-                );
-              }
-            } else {
-              if (!signalProvider.isServerRunning) {
-                await signalProvider.startServer();
-              }
-              await signalProvider.startStreaming();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Live signal streaming active! Broadcasting real-time frames over Wi-Fi & BLE.'),
-                    backgroundColor: Colors.teal,
-                  ),
-                );
-              }
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: appState.isStreaming
-                ? AppColors.error
-                : AppColors.primaryAccent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.button),
-            ),
-          ),
-          icon: Icon(appState.isStreaming ? Icons.stop : Icons.play_arrow),
-          label: Text(
-            appState.isStreaming ? 'STOP SIGNAL STREAMING' : 'START SIGNAL STREAMING',
-            style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
-          ),
-        ),
       ),
     );
   }
@@ -466,22 +277,30 @@ class HomeScreen extends StatelessWidget {
 class _ProfileStatItem extends StatelessWidget {
   final String title;
   final String value;
-
   const _ProfileStatItem({required this.title, required this.value});
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
-        ),
+        Text(title, style: const TextStyle(fontSize: 11, color: AppColors.secondaryText)),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryText),
-        ),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryText)),
+      ],
+    );
+  }
+}
+
+class _CompactMetric extends StatelessWidget {
+  final String title;
+  final String value;
+  const _CompactMetric({required this.title, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 9, color: Colors.white54)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
       ],
     );
   }
