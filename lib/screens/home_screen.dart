@@ -85,7 +85,7 @@ class HomeScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: const [
-                    _ProfileStatItem(title: 'Target Engine', value: 'Pyromatix & NeuroSync'),
+                    _ProfileStatItem(title: 'Target Platform', value: 'Pyromatix & NeuroSync'),
                     _ProfileStatItem(title: 'Data Channels', value: '4 CH (EEG/VEP)'),
                   ],
                 ),
@@ -100,7 +100,7 @@ class HomeScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: const Icon(Icons.settings),
-                  label: const Text('Manage Pyromatix & NeuroSync Node Settings'),
+                  label: const Text('Manage Telemetry & Transports'),
                   onPressed: () {
                     Navigator.pop(ctx);
                     Navigator.pushNamed(context, '/connection');
@@ -111,6 +111,38 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showNotificationsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.notifications_active, color: AppColors.primaryAccent),
+            SizedBox(width: 8),
+            Text('System Notifications'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('• WebSocket Telemetry server active on port 8765.'),
+            SizedBox(height: 8),
+            Text('• BLE Peripheral broadcast standard active (Pokidex-EEG).'),
+            SizedBox(height: 8),
+            Text('• 20 Patient Condition Presets loaded & calibrated.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('DISMISS'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -164,7 +196,8 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            tooltip: 'Notifications',
+            onPressed: () => _showNotificationsDialog(context),
           ),
           IconButton(
             icon: const Icon(Icons.settings_ethernet),
@@ -389,11 +422,24 @@ class HomeScreen extends StatelessWidget {
           onPressed: () async {
             if (appState.isStreaming) {
               await signalProvider.stopStreaming();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Stopped signal streaming.')),
+                );
+              }
             } else {
               if (!signalProvider.isServerRunning) {
                 await signalProvider.startServer();
               }
               await signalProvider.startStreaming();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Live signal streaming active! Broadcasting real-time frames over Wi-Fi & BLE.'),
+                    backgroundColor: Colors.teal,
+                  ),
+                );
+              }
             }
           },
           style: ElevatedButton.styleFrom(
@@ -408,7 +454,7 @@ class HomeScreen extends StatelessWidget {
           ),
           icon: Icon(appState.isStreaming ? Icons.stop : Icons.play_arrow),
           label: Text(
-            appState.isStreaming ? 'STOP STREAMING' : 'START DUAL STREAMING',
+            appState.isStreaming ? 'STOP SIGNAL STREAMING' : 'START SIGNAL STREAMING',
             style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
         ),

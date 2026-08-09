@@ -22,7 +22,6 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
     return ['All', ...cats];
   }
 
-  // Pre-generated sample waveform data for signal visualization preview
   List<List<double>> _generatePreviewWaveform(PatientConditionPreset preset) {
     final List<double> ch1 = [];
     final List<double> ch2 = [];
@@ -31,12 +30,11 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
     final thetaAmp = preset.eegConfig.theta.amplitude;
     final betaAmp = preset.eegConfig.beta.amplitude;
 
-    for (int i = 0; i < 100; i++) {
-      final t = i * 0.05;
-      final val1 = alphaAmp * 0.4 * (i % 8 < 4 ? 1.0 : -1.0) +
-          thetaAmp * 0.3 * (i % 14 < 7 ? 0.8 : -0.8) +
-          betaAmp * 0.2 * (i % 4 < 2 ? 0.5 : -0.5);
-      final val2 = val1 * 0.85 + (i % 6 < 3 ? 2.0 : -2.0);
+    for (int i = 0; i < 80; i++) {
+      final val1 = alphaAmp * 0.3 * (i % 8 < 4 ? 1.0 : -1.0) +
+          thetaAmp * 0.25 * (i % 14 < 7 ? 0.8 : -0.8) +
+          betaAmp * 0.15 * (i % 4 < 2 ? 0.5 : -0.5);
+      final val2 = val1 * 0.85 + (i % 6 < 3 ? 1.5 : -1.5);
 
       ch1.add(val1);
       ch2.add(val2);
@@ -57,20 +55,28 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
     }).toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         title: const Text('20 Patient Condition Presets'),
+        backgroundColor: const Color(0xFF1E293B),
+        elevation: 0,
       ),
       body: Column(
         children: [
-          // Banner Header
+          // Cyber Header Banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.indigo.shade900.withValues(alpha: 0.9),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.indigo.shade900, const Color(0xFF1E1B4B)],
+              ),
+              border: const Border(bottom: BorderSide(color: Colors.indigoAccent, width: 0.5)),
+            ),
             child: Row(
               children: const [
-                Icon(Icons.psychology, color: Colors.cyanAccent, size: 24),
-                SizedBox(width: 12),
+                Icon(Icons.psychology, color: Colors.cyanAccent, size: 22),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,12 +87,12 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.8,
                         ),
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Tap "USE THIS SIMULATION" to immediately feed any patient waveform into Pokidex.',
+                        'Tap play button to load physiological condition waveforms into Pokidex.',
                         style: TextStyle(color: Colors.white70, fontSize: 11),
                       ),
                     ],
@@ -96,17 +102,24 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
             ),
           ),
 
-          // Search & Category Filter Chips
+          // Search & Category Chips
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               children: [
                 TextField(
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'Search conditions (e.g., Epilepsy, ADHD, Alzheimer\'s)...',
-                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Search condition (e.g., Epilepsy, ADHD, Sleep)...',
+                    hintStyle: const TextStyle(color: Colors.white54, fontSize: 12),
+                    prefixIcon: const Icon(Icons.search, color: Colors.cyanAccent, size: 20),
                     isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.white24),
+                    ),
                   ),
                   onChanged: (val) {
                     setState(() {
@@ -123,8 +136,10 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: ChoiceChip(
-                          label: Text(cat),
+                          label: Text(cat, style: TextStyle(fontSize: 11, color: isSelected ? Colors.black : Colors.white)),
                           selected: isSelected,
+                          selectedColor: Colors.cyanAccent,
+                          backgroundColor: const Color(0xFF1E293B),
                           onSelected: (_) {
                             setState(() {
                               _selectedCategory = cat;
@@ -139,7 +154,7 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
             ),
           ),
 
-          // Presets List
+          // High Contrast Single Line Compact Presets List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -152,156 +167,126 @@ class _PatientPresetsScreenState extends State<PatientPresetsScreen> {
 
                 final previewBuffer = _generatePreviewWaveform(preset);
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: isCurrent ? 4 : 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(
-                      color: isCurrent ? Colors.tealAccent : Colors.grey.shade800,
-                      width: isCurrent ? 2 : 1,
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isCurrent ? Colors.tealAccent : Colors.white12,
+                      width: isCurrent ? 1.5 : 1,
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Title Row
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.blueGrey.shade800,
-                                borderRadius: BorderRadius.circular(6),
+                                color: Colors.indigo.shade900,
+                                borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 preset.category.toUpperCase(),
                                 style: const TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.cyanAccent,
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                preset.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                             if (isCurrent)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.tealAccent.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: Colors.tealAccent,
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(
-                                  'ACTIVE SIMULATION',
+                                  'ACTIVE',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 9,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.tealAccent,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          preset.title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          preset.medicalDescription,
-                          style: const TextStyle(fontSize: 12, color: Colors.white70),
-                        ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 6),
 
-                        // Signal Waveform Visual Representation
-                        Container(
-                          height: 70,
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Stack(
-                            children: [
-                              WaveformChart(channelData: previewBuffer),
-                              Positioned(
-                                top: 4,
-                                right: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'SIGNAL PATTERN PREVIEW',
-                                    style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 8,
-                                      color: Colors.cyanAccent,
-                                    ),
-                                  ),
+                        // Waveform Preview Bar & Play Button in a Single Compact Bar
+                        Row(
+                          children: [
+                            // Mini Waveform Box
+                            Expanded(
+                              child: Container(
+                                height: 40,
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.white12),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: WaveformChart(channelData: previewBuffer),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.analytics_outlined, size: 14, color: Colors.amberAccent),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'Signature: ${preset.clinicalSignature}',
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 11,
-                                    color: Colors.amberAccent,
-                                  ),
+                            ),
+                            const SizedBox(width: 10),
+                            // Single Line Compact Action Button
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isCurrent ? Colors.tealAccent : const Color(0xFF3B82F6),
+                                foregroundColor: isCurrent ? Colors.black : Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              ),
+                              icon: Icon(
+                                isCurrent ? Icons.check_circle : Icons.play_arrow,
+                                size: 16,
+                                color: isCurrent ? Colors.black : Colors.white,
+                              ),
+                              label: Text(
+                                isCurrent ? 'SIMULATION LOADED' : 'USE SIMULATION',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCurrent ? Colors.black : Colors.white,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isCurrent ? Colors.tealAccent : Colors.indigoAccent,
-                              foregroundColor: isCurrent ? Colors.black : Colors.white,
+                              onPressed: () {
+                                appState.updateEegConfig(preset.eegConfig);
+                                appState.updateErpConfig(preset.erpConfig);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Loaded simulation: ${preset.title}'),
+                                    backgroundColor: Colors.teal,
+                                    duration: const Duration(milliseconds: 1000),
+                                  ),
+                                );
+                              },
                             ),
-                            icon: Icon(isCurrent ? Icons.check_circle : Icons.play_arrow),
-                            label: Text(
-                              isCurrent ? 'ACTIVE SIMULATION LOADED' : 'USE THIS SIMULATION',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                            onPressed: () {
-                              appState.updateEegConfig(preset.eegConfig);
-                              appState.updateErpConfig(preset.erpConfig);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Switched active simulation to "${preset.title}"!'),
-                                  backgroundColor: Colors.teal,
-                                ),
-                              );
-                            },
-                          ),
+                          ],
                         ),
                       ],
                     ),

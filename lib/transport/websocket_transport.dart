@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:io';
 
 import 'package:shelf/shelf.dart' as shelf;
@@ -12,8 +12,7 @@ import 'signal_transport.dart';
 class WebSocketTransport implements SignalTransport {
   final int port;
 
-  final _statusController =
-      StreamController<TransportStatus>.broadcast();
+  final _statusController = StreamController<TransportStatus>.broadcast();
   final _infoController = StreamController<String>.broadcast();
 
   final List<WebSocketChannel> _clients = [];
@@ -44,45 +43,45 @@ class WebSocketTransport implements SignalTransport {
       final handler = webSocketHandler((WebSocketChannel channel) {
         _clients.add(channel);
         _setStatus(TransportStatus.connected);
-        _infoController.add('Client connected (${_clients.length} total)');
+        _infoController.add('[WebSocket] Pyromatix / NeuroSync Client Connected (Total: ${_clients.length})');
 
         channel.stream.listen(
-          null,
+          (msg) {
+            // Keep-alive or inbound telemetry commands
+          },
           onDone: () {
             _clients.remove(channel);
-            _infoController
-                .add('Client disconnected (${_clients.length} remaining)');
+            _infoController.add('[WebSocket] Client Disconnected (${_clients.length} remaining)');
             if (_clients.isEmpty) {
               _setStatus(TransportStatus.waiting);
             }
           },
           onError: (e) {
             _clients.remove(channel);
-            _infoController.add('Client error: $e');
+            _infoController.add('[WebSocket] Client error: $e');
             if (_clients.isEmpty) {
               _setStatus(TransportStatus.waiting);
             }
           },
-          cancelOnError: true,
+          cancelOnError: false,
         );
       });
 
       _server = await shelf_io.serve(
-        shelf.logRequests(logger: (msg, isError) {
-          if (isError) _infoController.add('[ERROR] $msg');
-        }).addHandler(handler),
+        shelf.logRequests().addHandler(handler),
         InternetAddress.anyIPv4,
         port,
+        shared: true,
       );
 
       _setStatus(TransportStatus.waiting);
 
       final ips = await _getLocalIps();
       final wsUrls = ips.map((ip) => 'ws://$ip:$port').join(', ');
-      _infoController.add('Server started — $wsUrls');
+      _infoController.add('[WebSocket] Server active — $wsUrls');
     } catch (e) {
       _setStatus(TransportStatus.error);
-      _infoController.add('Failed to start server: $e');
+      _infoController.add('[WebSocket] Server Error: $e');
       rethrow;
     }
   }
@@ -90,23 +89,31 @@ class WebSocketTransport implements SignalTransport {
   @override
   Future<void> stop() async {
     for (final client in List.from(_clients)) {
-      await client.sink.close();
+      try {
+        await client.sink.close();
+      } catch (_) {}
     }
     _clients.clear();
     await _server?.close(force: true);
     _server = null;
     _setStatus(TransportStatus.stopped);
-    _infoController.add('Server stopped');
+    _infoController.add('[WebSocket] Server stopped');
   }
 
   @override
   Future<void> send(SignalFrame frame) async {
-    if (_clients.isEmpty) return;
-    final json = frame.toJsonString();
+    final jsonPayload = frame.toJsonString();
+
     for (final client in List.from(_clients)) {
       try {
-        client.sink.add(json);
-      } catch (_) {}
+        client.sink.add(jsonPayload);
+      } catch (e) {
+        _clients.remove(client);
+        _infoController.add('[WebSocket] Send failed, client dropped');
+        if (_clients.isEmpty) {
+          _setStatus(TransportStatus.waiting);
+        }
+      }
     }
   }
 
