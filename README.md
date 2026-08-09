@@ -18,6 +18,7 @@
 ---
 
 ## 📖 Table of Contents
+- [Detailed System Description](#-detailed-system-description)
 - [Overview & Purpose](#-overview--purpose)
 - [Key Features](#-key-features)
 - [Instant QR Code Connectivity](#-instant-qr-code-connectivity)
@@ -31,6 +32,34 @@
 - [Getting Started](#-getting-started)
 - [Tech Stack & Dependencies](#-tech-stack--dependencies)
 - [Contributing & License](#-license)
+
+---
+
+## 🔬 Detailed System Description
+
+**POKIDEX** (Biomedical Signal Synthesizer & Telemetry Terminal) is an advanced, cross-platform software ecosystem engineered to solve a fundamental challenge in Brain-Computer Interface (BCI) research: **testing, calibrating, and validating real-time neural decoding pipelines without requiring continuous human subjects or physical hardware electrodes**.
+
+### 🎯 What Pokidex Accomplishes
+In modern neuroscience and BCI development, software pipelines like **Pyromatix** (signal processing, filtering, and machine learning feature extraction) and **NeuroSync** (real-time neural feedback & stimulus presentation) require continuous streams of high-frequency bio-potential data. POKIDEX serves as an intelligent, controllable bio-signal generator and acquisition node that broadcasts mathematically authentic multi-channel electroencephalogram (EEG) and visual evoked potential (ERP/VEP) data streams.
+
+### 🧠 Core Capabilities & Scientific Precision
+1. **Mathematical Waveform Synthesis**:
+   - **Full Frequency Band Control**: Synthesizes continuous multi-frequency rhythms across **Delta (0.5–4 Hz)**, **Theta (4–8 Hz)**, **Alpha (8–12 Hz)**, **Beta (12–30 Hz)**, and **Gamma (30–100+ Hz)** bands.
+   - **Realistic Biological Artifacts**: Blends pink $1/f$ background noise, muscle EMG jitter, ocular blink artifacts, and powerline 50/60 Hz hum to replicate authentic clinical environments.
+   - **Stimulus-Locked Evoked Potentials**: Generates precise event-related potentials including **N75, P100, and N145** visual responses with adjustable latency jitter for trial-averaged ERP validation.
+
+2. **20 Clinical Neurological Condition Presets**:
+   - Includes 20 pre-configured physiological profiles ranging from **Epileptic Absence Spikes** (3 Hz spike-and-wave discharges), **ADHD Focus Deficits** (high Theta/Beta ratios), **Alzheimer's Diffuse Slowing**, **Sleep Stages (N3 Slow-Wave & REM)**, to **Propofol Anesthesia Burst Suppression**.
+   - Each preset features a single-line cyber card design with a real-time waveform preview graph.
+
+3. **Camera-Based Instant QR Code Connectivity**:
+   - Eliminates manual IP configuration and Bluetooth discovery delays.
+   - Users scan the QR code displayed on the **Pyromatix** or **NeuroSync** terminal using the built-in live camera viewfinder (`mobile_scanner`).
+   - Pokidex instantly parses the pairing payload, initializes embedded TCP WebSockets (`shelf_web_socket`), and activates real-time signal transmission, data acquisition, and spectral breakdown.
+
+4. **Biomedical Analytics & Ground-Truth Event Logging**:
+   - **Spectral Power Density (SPD)**: Computes dynamic frequency power distribution with period switching (`DAY`, `WEEK`, `MONTH`).
+   - **Ground-Truth CSV/JSON Recorder**: Records millisecond-accurate timestamped event triggers alongside raw bio-potential samples, allowing BCI researchers to evaluate machine learning classification accuracy against known baseline ground truth.
 
 ---
 
