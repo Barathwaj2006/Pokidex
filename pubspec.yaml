@@ -1,4 +1,4 @@
-name: pokidex
+﻿name: pokidex
 description: POKIDEX - Neural Signal Simulation & Research Platform
 publish_to: 'none'
 version: 1.0.0+1
@@ -28,3 +28,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/
