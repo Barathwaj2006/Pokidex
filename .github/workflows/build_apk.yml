@@ -9,6 +9,8 @@ jobs:
   build:
     name: Build Pokidex Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -46,3 +48,27 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish Production GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.1.0
+          name: "Pokidex v1.1.0 - Production Neural Telemetry Platform"
+          body: |
+            ## Pokidex v1.1.0 Production Release
+
+            Production-ready APK with 250 Hz neural signal streaming over Bluetooth Low Energy (BLE) and Wi-Fi WebSockets for cognitive load analysis in NeuroSim.
+
+            ### Features & Hardening:
+            - **250 Hz Continuous Streaming**: Compact binary telemetry and JSON chunking over BLE & WebSockets.
+            - **Android 14+ Foreground Service**: Persistent biopotential transmission with `connectedDevice` service type and wake-locks.
+            - **Two-Way Remote Control**: Remote laptop commands alter patient presets and sampling parameters on the fly.
+            - **Researcher Authentication & Terms**: Institutional login, researcher credentials, and safety protocol agreements.
+            - **Zero-Drop Architecture**: Thread-safe GATT notifications and cleartext WebSocket support.
+
+            ### Installation:
+            Download `app-release.apk` below and install on your Android device (API 21+).
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

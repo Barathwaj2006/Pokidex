@@ -42,12 +42,18 @@ class _MainShellScreenState extends State<MainShellScreen> {
         ),
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
+            color: AppColors.primarySurface,
             border: Border(
-              top: BorderSide(color: AppColors.border, width: 1),
+              top: BorderSide(color: AppColors.cardBorder, width: 1),
             ),
           ),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
+            backgroundColor: AppColors.primarySurface,
+            selectedItemColor: AppColors.primaryAccent,
+            unselectedItemColor: AppColors.mutedText,
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
@@ -57,7 +63,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard_outlined),
                 activeIcon: Icon(Icons.dashboard, color: AppColors.primaryAccent),
-                label: 'Home',
+                label: 'Terminal',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.bar_chart_outlined),
@@ -77,7 +83,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
               BottomNavigationBarItem(
                 icon: Icon(Icons.sensors_outlined),
                 activeIcon: Icon(Icons.sensors, color: AppColors.primaryAccent),
-                label: 'Connect',
+                label: 'Telemetry',
               ),
             ],
           ),

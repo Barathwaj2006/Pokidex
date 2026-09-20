@@ -8,8 +8,80 @@ import '../transport/ble_peripheral_transport.dart';
 enum ActiveEngine { eeg, erp }
 
 class AppStateProvider extends ChangeNotifier {
-  ActiveEngine _activeEngine = ActiveEngine.eeg;
+  // --- Authentication & Session State ---
+  bool _isLoggedIn = false;
+  bool get isLoggedIn => _isLoggedIn;
 
+  String _researcherName = 'Barathwaj R.';
+  String get researcherName => _researcherName;
+
+  String _researcherEmail = 'researcher@bci-lab.org';
+  String get researcherEmail => _researcherEmail;
+
+  String _institution = 'Cognitive Neuroscience & BCI Laboratory';
+  String get institution => _institution;
+
+  String _researcherRole = 'Principal Investigator';
+  String get researcherRole => _researcherRole;
+
+  bool _termsAccepted = false;
+  bool get termsAccepted => _termsAccepted;
+
+  DateTime? _termsAcceptedAt;
+  DateTime? get termsAcceptedAt => _termsAcceptedAt;
+
+  void acceptTerms() {
+    _termsAccepted = true;
+    _termsAcceptedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  void setTermsAccepted(bool accepted) {
+    _termsAccepted = accepted;
+    if (accepted) {
+      _termsAcceptedAt = DateTime.now();
+    }
+    notifyListeners();
+  }
+
+  bool login({
+    required String email,
+    required String password,
+    String? name,
+    String? role,
+    String? institution,
+  }) {
+    if (email.trim().isEmpty || password.trim().isEmpty) {
+      return false;
+    }
+    _isLoggedIn = true;
+    _researcherEmail = email.trim();
+    if (name != null && name.isNotEmpty) _researcherName = name;
+    if (role != null && role.isNotEmpty) _researcherRole = role;
+    if (institution != null && institution.isNotEmpty) _institution = institution;
+    _termsAccepted = true;
+    _termsAcceptedAt ??= DateTime.now();
+    notifyListeners();
+    return true;
+  }
+
+  void loginAsGuest({String role = 'Laboratory Guest Investigator'}) {
+    _isLoggedIn = true;
+    _researcherName = 'Guest Researcher';
+    _researcherEmail = 'demo@pokidex-bci.local';
+    _researcherRole = role;
+    _termsAccepted = true;
+    _termsAcceptedAt ??= DateTime.now();
+    notifyListeners();
+  }
+
+  void logout() {
+    _isLoggedIn = false;
+    notifyListeners();
+  }
+
+  // --- Engine & Telemetry State ---
+  ActiveEngine _activeEngine = ActiveEngine.eeg;
   ActiveEngine get activeEngine => _activeEngine;
 
   void setActiveEngine(ActiveEngine engine) {
@@ -18,7 +90,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   bool _isStreaming = false;
-
   bool get isStreaming => _isStreaming;
 
   void setStreaming(bool v) {
@@ -27,7 +98,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   int _packetsPerSecond = 0;
-
   int get packetsPerSecond => _packetsPerSecond;
 
   void setPacketsPerSecond(int v) {
@@ -37,7 +107,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   EegConfig _eegConfig = const EegConfig();
-
   EegConfig get eegConfig => _eegConfig;
 
   void updateEegConfig(EegConfig config) {
@@ -46,7 +115,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   ErpConfig _erpConfig = const ErpConfig();
-
   ErpConfig get erpConfig => _erpConfig;
 
   void updateErpConfig(ErpConfig config) {
@@ -55,7 +123,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Scenario _currentScenario = Scenario.custom;
-
   Scenario get currentScenario => _currentScenario;
 
   void applyScenario(Scenario scenario) {
@@ -69,7 +136,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   int _wsPort = 8765;
-
   int get wsPort => _wsPort;
 
   void setWsPort(int port) {
@@ -78,7 +144,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   int _batchSize = 10;
-
   int get batchSize => _batchSize;
 
   void setBatchSize(int size) {

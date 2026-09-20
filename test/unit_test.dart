@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokidex/models/connection_state_step.dart';
 import 'package:pokidex/models/qr_pairing_payload.dart';
 import 'package:pokidex/models/signal_frame.dart';
+import 'package:pokidex/providers/app_state_provider.dart';
 import 'package:pokidex/transport/client_websocket_connection.dart';
 
 void main() {
@@ -156,6 +157,61 @@ void main() {
 
       client.dispose();
       await server.close(force: true);
+    });
+  });
+
+  group('4. Researcher Authentication & IRB Terms State Tests', () {
+    test('Initial state: logged out and terms unaccepted', () {
+      final appState = AppStateProvider();
+      expect(appState.isLoggedIn, isFalse);
+      expect(appState.termsAccepted, isFalse);
+    });
+
+    test('Accepting terms updates state and records timestamp', () {
+      final appState = AppStateProvider();
+      appState.acceptTerms();
+      expect(appState.termsAccepted, isTrue);
+      expect(appState.termsAcceptedAt, isNotNull);
+    });
+
+    test('Login fails with empty credentials', () {
+      final appState = AppStateProvider();
+      final success = appState.login(email: '', password: '');
+      expect(success, isFalse);
+      expect(appState.isLoggedIn, isFalse);
+    });
+
+    test('Login succeeds with valid credentials', () {
+      final appState = AppStateProvider();
+      final success = appState.login(
+        email: 'investigator@bci.org',
+        password: 'secureKey2026',
+        name: 'Dr. Barathwaj R.',
+        role: 'Principal Investigator',
+        institution: 'BCI Research Institute',
+      );
+      expect(success, isTrue);
+      expect(appState.isLoggedIn, isTrue);
+      expect(appState.researcherName, equals('Dr. Barathwaj R.'));
+      expect(appState.researcherRole, equals('Principal Investigator'));
+      expect(appState.termsAccepted, isTrue);
+    });
+
+    test('Guest login provides laboratory demo access', () {
+      final appState = AppStateProvider();
+      appState.loginAsGuest();
+      expect(appState.isLoggedIn, isTrue);
+      expect(appState.researcherName, equals('Guest Researcher'));
+      expect(appState.termsAccepted, isTrue);
+    });
+
+    test('Logout clears session state', () {
+      final appState = AppStateProvider();
+      appState.loginAsGuest();
+      expect(appState.isLoggedIn, isTrue);
+
+      appState.logout();
+      expect(appState.isLoggedIn, isFalse);
     });
   });
 }
