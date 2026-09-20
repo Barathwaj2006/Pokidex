@@ -110,6 +110,7 @@ class SignalProvider extends ChangeNotifier {
   bool get isWifiActive => _multiTransport?.isWifiEnabled == true && _wifiTransport?.status != TransportStatus.stopped;
   bool get isBleActive => _multiTransport?.isBleEnabled == true && _bleTransport?.status != TransportStatus.stopped;
   int get bleConnectedCount => _bleTransport?.connectedClientCount ?? 0;
+  bool get isBleConnected => bleConnectedCount > 0;
   int get wifiConnectedCount => _wifiTransport?.connectedClientCount ?? 0;
   BleStreamFormat get bleFormat => appState.bleFormat;
 
