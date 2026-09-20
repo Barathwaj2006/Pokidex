@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/eeg_config.dart';
 import '../models/erp_config.dart';
 import '../models/scenario.dart';
+import '../transport/ble_peripheral_transport.dart';
 
 enum ActiveEngine { eeg, erp }
 
@@ -107,6 +108,14 @@ class AppStateProvider extends ChangeNotifier {
 
   void setBleDeviceName(String name) {
     _bleDeviceName = name;
+    notifyListeners();
+  }
+
+  BleStreamFormat _bleFormat = BleStreamFormat.binary;
+  BleStreamFormat get bleFormat => _bleFormat;
+
+  void setBleFormat(BleStreamFormat format) {
+    _bleFormat = format;
     notifyListeners();
   }
 }

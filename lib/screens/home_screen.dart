@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/connection_state_step.dart';
@@ -118,8 +118,8 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Connect via QR Scanner',
+            icon: const Icon(Icons.sensors),
+            tooltip: 'Wireless Telemetry Broadcast',
             onPressed: () => Navigator.pushNamed(context, '/connection'),
           ),
           const SizedBox(width: 8),
@@ -167,8 +167,8 @@ class HomeScreen extends StatelessWidget {
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('CONNECT TO PYROSYNC', style: TextStyle(fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.sensors),
+                    label: const Text('WIRELESS TELEMETRY BROADCAST', style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () => Navigator.pushNamed(context, '/connection'),
                   ),
                 ),

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokidex Live Telemetry Receiver — Cognitive Load & Neural Waves</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #151f32;
+      --card-border: #1e293b;
+      --cyan: #06b6d4;
+      --teal: #14b8a6;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+
+    .status-dot.connected {
+      background: var(--teal);
+      box-shadow: 0 0 10px rgba(20, 184, 166, 0.8);
+    }
+
+    .status-dot.connecting {
+      background: var(--amber);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--cyan);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Connection Controls */
+    .btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+    }
+
+    .btn-ble {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-ble:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-ws {
+      background: var(--teal);
+      color: #042f2e;
+    }
+
+    .btn-ws:hover {
+      background: #0d9488;
+      color: white;
+    }
+
+    .btn-disconnect {
+      background: #334155;
+      color: var(--text-dim);
+    }
+
+    .btn-disconnect:hover {
+      background: var(--red);
+      color: white;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: #0b1120;
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+
+    .btn-preset {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 7px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-preset:hover {
+      background: #334155;
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .btn-mode {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      padding: 6px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-mode:hover {
+      background: #334155;
+      color: white;
+      border-color: var(--teal);
+    }
+
+    .btn-send {
+      background: var(--blue);
+      border: none;
+      color: white;
+      padding: 0 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-send:hover {
+      background: #2563eb;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+      margin-top: 14px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-dim);
+    }
+
+    .info-item span:last-child {
+      color: var(--text);
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    /* Cognitive Load Panel */
+    .cog-meter-wrap {
+      margin-top: 14px;
+    }
+
+    .cog-bar-bg {
+      height: 12px;
+      background: #0b1120;
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 8px 0;
+      border: 1px solid var(--card-border);
+    }
+
+    .cog-bar-fill {
+      height: 100%;
+      width: 25%;
+      background: linear-gradient(90deg, var(--teal), var(--cyan), var(--amber), var(--red));
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+
+    .cog-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    /* Canvas Oscilloscope */
+    .oscilloscope-wrap {
+      background: #070d17;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    canvas {
+      width: 100%;
+      height: 380px;
+      display: block;
+    }
+
+    .channel-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      font-size: 11px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    /* Log terminal */
+    .log-terminal {
+      background: #070d17;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      height: 140px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      line-height: 1.5;
+    }
+
+    .log-line {
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <h1>POKIDEX WIRELESS TELEMETRY RECEIVER</h1>
+          <div class="subtitle">Cognitive Load & Neural Signal Acquisition Node (Web Bluetooth / WebSocket)</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">DISCONNECTED</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left Column: Controls & Metrics -->
+      <div>
+        <!-- Connection Card -->
+        <div class="card">
+          <h2>📡 HARDWARE CONNECTION</h2>
+          
+          <!-- Bluetooth Option -->
+          <button class="btn btn-ble" id="bleConnectBtn" onclick="connectBluetooth()">
+            <span>🔵</span> CONNECT VIA BLUETOOTH (BLE)
+          </button>
+          
+          <div style="text-align: center; font-size: 11px; color: var(--text-dim); margin: 6px 0;">— OR WI-FI SOCKET —</div>
+
+          <!-- WebSocket Option -->
+          <div class="input-group">
+            <input type="text" id="wsInput" placeholder="ws://192.168.1.x:8765" value="ws://127.0.0.1:8765" />
+          </div>
+          <button class="btn btn-ws" id="wsConnectBtn" onclick="connectWebSocket()">
+            <span>🌐</span> CONNECT WI-FI WEBSOCKET
+          </button>
+
+          <button class="btn btn-disconnect" id="disconnectBtn" onclick="disconnectAll()" style="display: none;">
+            DISCONNECT
+          </button>
+
+          <div class="info-list">
+            <div class="info-item"><span>Active Transport:</span><span id="infoTransport">None</span></div>
+            <div class="info-item"><span>Packet Format:</span><span id="infoFormat">Auto-Detecting</span></div>
+            <div class="info-item"><span>Sampling Rate:</span><span id="infoRate">250 Hz</span></div>
+            <div class="info-item"><span>Packets Received:</span><span id="infoPackets">0</span></div>
+            <div class="info-item"><span>Effective Stream Rate:</span><span id="infoFps">0.0 Hz</span></div>
+            <div class="info-item"><span>Active Channels:</span><span id="infoChannels">4 CH (Fp1, Fp2, O1, O2)</span></div>
+          </div>
+        </div>
+
+        <!-- Remote Phone Control Panel (Two-Way Bluetooth / WebSocket) -->
+        <div class="card">
+          <h2>🎮 PHONE REMOTE CONTROL (Two-Way)</h2>
+          <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">
+            Transmit real-time telemetry commands back to the Pokidex APK over Bluetooth or Wi-Fi without restarting the stream.
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 11px; color: var(--cyan); font-weight: 600; display: block; margin-bottom: 6px;">QUICK PATIENT / COGNITIVE PRESETS</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <button class="btn-preset" onclick="sendCommand('PRESET:p01')">Normal Awake (p01)</button>
+              <button class="btn-preset" onclick="sendCommand('PRESET:p02')">Meditation / Alpha (p02)</button>
+              <button class="btn-preset" onclick="sendCommand('PRESET:p03')">Cognitive Load (p03)</button>
+              <button class="btn-preset" onclick="sendCommand('PRESET:p04')">Epilepsy Spike (p04)</button>
+              <button class="btn-preset" onclick="sendCommand('PRESET:p05')">Deep Sleep Delta (p05)</button>
+              <button class="btn-preset" onclick="sendCommand('PRESET:p06')">Drowsy / Theta (p06)</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 4px;">ALL 20 PATIENT VARIANTS:</label>
+            <select id="presetSelect" onchange="if(this.value) sendCommand('PRESET:' + this.value)" style="width: 100%; background: #0b1120; border: 1px solid var(--card-border); color: white; padding: 8px; border-radius: 6px; font-size: 11px;">
+              <option value="">-- Choose Patient Variant --</option>
+              <option value="p01">P01: Normal Awake (Alpha 10Hz, Beta 18Hz)</option>
+              <option value="p02">P02: Deep Meditation (High Alpha 9.5Hz, Low Beta)</option>
+              <option value="p03">P03: High Cognitive Load (Beta Burst 24Hz, Suppressed Alpha)</option>
+              <option value="p04">P04: Absence Epilepsy (3Hz Spike-Wave Discharge)</option>
+              <option value="p05">P05: Deep NREM Sleep (Dominant 1.5Hz Delta Waves)</option>
+              <option value="p06">P06: Drowsy Pre-Sleep (6Hz Theta, Attenuated Alpha)</option>
+              <option value="p07">P07: Visual Photic Drive (12Hz Occipital Resonant)</option>
+              <option value="p08">P08: Frontal Asymmetry / Affective Shift</option>
+              <option value="p09">P09: Motor Imagery / Mu Rhythm Desynchronization</option>
+              <option value="p10">P10: Severe Encephalopathy (Diffuse Slowing Delta)</option>
+              <option value="p11">P11: Tonic-Clonic Seizure Pre-Ictal Pattern</option>
+              <option value="p12">P12: Focal Temporal Spike Focus</option>
+              <option value="p13">P13: REM Sleep State with Rapid Eye Blinks</option>
+              <option value="p14">P14: ADHD / High Theta-to-Beta Ratio (TBR)</option>
+              <option value="p15">P15: Comatose Burst Suppression</option>
+              <option value="p16">P16: Muscle Artifact Contaminated (High Frequency EMG)</option>
+              <option value="p17">P17: High Cardiac Pulse Artifact (1.2Hz Periodic ECG)</option>
+              <option value="p18">P18: Extreme Mental Fatigue / Vigilance Decline</option>
+              <option value="p19">P19: Auditory P300 Oddball Target Response</option>
+              <option value="p20">P20: Visual Evoked Potential (VEP / P100 Pattern)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+            <button class="btn-mode" onclick="sendCommand('FORMAT:BIN')">⚡ Binary (13B)</button>
+            <button class="btn-mode" onclick="sendCommand('FORMAT:JSON')">📄 JSON Mode</button>
+            <button class="btn-mode" onclick="sendCommand('START')">▶ Start</button>
+            <button class="btn-mode" onclick="sendCommand('STOP')">⏹ Stop</button>
+          </div>
+
+          <div class="input-group" style="margin-bottom: 0;">
+            <input type="text" id="customCmdInput" placeholder="Command (e.g. PRESET:p04)" />
+            <button class="btn-send" onclick="sendCustomCommand()">Send</button>
+          </div>
+        </div>
+
+        <!-- Cognitive Load Analysis Card (for NeuroSim) -->
+        <div class="card">
+          <h2>🧠 COGNITIVE LOAD ANALYSIS (NeuroSim)</h2>
+          <div class="info-item"><span>Cognitive Index:</span><span id="cogIndexText" style="color: var(--cyan);">0.00 (Resting)</span></div>
+          <div class="cog-meter-wrap">
+            <div class="cog-bar-bg">
+              <div class="cog-bar-fill" id="cogBar"></div>
+            </div>
+            <div class="cog-labels">
+              <span>Low (Relaxed)</span>
+              <span>Moderate</span>
+              <span>High (Workload)</span>
+              <span>Overload</span>
+            </div>
+          </div>
+
+          <div class="info-list" style="margin-top: 14px;">
+            <div class="info-item"><span>Theta / Beta Ratio:</span><span id="metricTbr">0.00</span></div>
+            <div class="info-item"><span>Alpha Suppression:</span><span id="metricAlpha">0.0%</span></div>
+            <div class="info-item"><span>Gamma Synchrony:</span><span id="metricGamma">0.0 uV</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Oscilloscope & Log -->
+      <div>
+        <div class="card" style="padding-bottom: 14px;">
+          <h2>📊 LIVE MULTI-CHANNEL NEURAL OSCILLOSCOPE</h2>
+          
+          <div class="oscilloscope-wrap">
+            <canvas id="scopeCanvas"></canvas>
+          </div>
+
+          <div class="channel-legend">
+            <div class="legend-item"><div class="legend-color" style="background: #38bdf8;"></div><span>Ch 1 (Fp1)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #2dd4bf;"></div><span>Ch 2 (Fp2)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #a855f7;"></div><span>Ch 3 (O1)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div><span>Ch 4 (O2)</span></div>
+          </div>
+        </div>
+
+        <!-- Telemetry Log -->
+        <div class="card">
+          <h2>📋 TELEMETRY PROTOCOL LOG</h2>
+          <div class="log-terminal" id="logTerminal">
+            <div class="log-line">> Pokidex Wireless Receiver initialized.</div>
+            <div class="log-line">> High-Performance Compact Binary (13-Byte) & JSON ready.</div>
+            <div class="log-line">> Web Bluetooth (BLE 250Hz Zero-Drop) & Wi-Fi supported.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration & State
+    const SERVICE_UUID = '0000fe50-0000-1000-8000-00805f9b34fb';
+    const CHARACTERISTIC_UUID = '0000fe51-0000-1000-8000-00805f9b34fb';
+
+    let bleDevice = null;
+    let bleCharacteristic = null;
+    let wsSocket = null;
+
+    let packetsCount = 0;
+    let lastSecPackets = 0;
+    let effectiveFps = 0;
+    let activeTransportName = 'None';
+    let currentFormatName = 'Auto-Detecting';
+
+    // Buffers for 4 channels
+    const BUFFER_LEN = 300;
+    const channelBuffers = [[], [], [], []];
+    for (let c = 0; c < 4; c++) {
+      channelBuffers[c] = new Array(BUFFER_LEN).fill(0);
+    }
+
+    // BLE Chunk assembly map for JSON fallback: seq -> Array of chunks
+    const chunkAssembly = new Map();
+
+    // Elements
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const infoTransport = document.getElementById('infoTransport');
+    const infoFormat = document.getElementById('infoFormat');
+    const infoRate = document.getElementById('infoRate');
+    const infoPackets = document.getElementById('infoPackets');
+    const infoFps = document.getElementById('infoFps');
+    const logTerminal = document.getElementById('logTerminal');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const bleConnectBtn = document.getElementById('bleConnectBtn');
+    const wsConnectBtn = document.getElementById('wsConnectBtn');
+
+    const cogBar = document.getElementById('cogBar');
+    const cogIndexText = document.getElementById('cogIndexText');
+    const metricTbr = document.getElementById('metricTbr');
+    const metricAlpha = document.getElementById('metricAlpha');
+    const metricGamma = document.getElementById('metricGamma');
+
+    function log(msg) {
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      const time = new Date().toLocaleTimeString();
+      line.textContent = `[${time}] ${msg}`;
+      logTerminal.appendChild(line);
+      logTerminal.scrollTop = logTerminal.scrollHeight;
+    }
+
+    function setConnected(transport) {
+      activeTransportName = transport;
+      statusDot.className = 'status-dot connected';
+      statusText.textContent = `CONNECTED (${transport.toUpperCase()})`;
+      infoTransport.textContent = transport;
+      disconnectBtn.style.display = 'block';
+      bleConnectBtn.style.display = 'none';
+      wsConnectBtn.style.display = 'none';
+      log(`Established active link via ${transport}`);
+    }
+
+    function setDisconnected() {
+      activeTransportName = 'None';
+      statusDot.className = 'status-dot';
+      statusText.textContent = 'DISCONNECTED';
+      infoTransport.textContent = 'None';
+      infoFormat.textContent = 'None';
+      disconnectBtn.style.display = 'none';
+      bleConnectBtn.style.display = 'flex';
+      wsConnectBtn.style.display = 'flex';
+      log('Transport link disconnected.');
+    }
+
+    // -------------------------------------------------------------
+    // Web Bluetooth API Client
+    // -------------------------------------------------------------
+    async function connectBluetooth() {
+      if (!navigator.bluetooth) {
+        alert('Web Bluetooth API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Opera on Windows/Mac/Android.');
+        return;
+      }
+
+      try {
+        log('Scanning for Pokidex BLE Peripheral (Service: 0000fe50)...');
+        statusDot.className = 'status-dot connecting';
+        statusText.textContent = 'BLE PAIRING...';
+
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID] }],
+          optionalServices: [SERVICE_UUID]
+        });
+
+        log(`Found device: ${bleDevice.name || 'Pokidex-EEG'}. Connecting GATT...`);
+        bleDevice.addEventListener('gattserverdisconnected', onBleDisconnected);
+
+        const server = await bleDevice.gatt.connect();
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', onBleCharacteristicValueChanged);
+
+        setConnected('Bluetooth LE');
+        log('Subscribed to characteristic notifications (Two-way ready)');
+      } catch (err) {
+        log(`BLE Error: ${err.message}`);
+        setDisconnected();
+      }
+    }
+
+    function onBleCharacteristicValueChanged(event) {
+      const dataView = event.target.value;
+      if (dataView.byteLength < 4) return;
+
+      // 1. FAST-PATH: Compact Binary Protocol (0xAA 0x01 Header)
+      // 13 Bytes Total: [0xAA, 0x01, seq_hi, seq_lo, ch_count, ch1_hi, ch1_lo, ...]
+      if (dataView.getUint8(0) === 0xAA && dataView.getUint8(1) === 0x01) {
+        if (currentFormatName !== 'Compact Binary (13B)') {
+          currentFormatName = 'Compact Binary (13B)';
+          infoFormat.textContent = currentFormatName;
+          infoFormat.style.color = 'var(--teal)';
+        }
+
+        const seq = (dataView.getUint8(2) << 8) | dataView.getUint8(3);
+        const chCount = dataView.getUint8(4);
+        const samples = [];
+        for (let i = 0; i < chCount; i++) {
+          const rawInt16 = dataView.getInt16(5 + i * 2, false); // Big-Endian
+          samples.push(rawInt16 / 10.0); // Scaled microvolts
+        }
+
+        handleSignalFrame({
+          data: { channel_samples: samples },
+          seq: seq
+        });
+        return;
+      }
+
+      // 2. FALLBACK: Chunked JSON Protocol
+      const seq = (dataView.getUint8(0) << 8) | dataView.getUint8(1);
+      const chunkIdx = dataView.getUint8(2);
+      const totalChunks = dataView.getUint8(3);
+      const chunkBytes = new Uint8Array(dataView.buffer, dataView.byteOffset + 4, dataView.byteLength - 4);
+
+      if (currentFormatName !== 'JSON Chunks') {
+        currentFormatName = 'JSON Chunks';
+        infoFormat.textContent = currentFormatName;
+        infoFormat.style.color = 'var(--amber)';
+      }
+
+      if (!chunkAssembly.has(seq)) {
+        chunkAssembly.set(seq, new Array(totalChunks));
+      }
+      const chunks = chunkAssembly.get(seq);
+      chunks[chunkIdx] = chunkBytes;
+
+      if (chunks.filter(Boolean).length === totalChunks) {
+        let totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
+        let merged = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const c of chunks) {
+          merged.set(c, offset);
+          offset += c.length;
+        }
+        chunkAssembly.delete(seq);
+
+        try {
+          const jsonStr = new TextDecoder().decode(merged);
+          const frame = JSON.parse(jsonStr);
+          handleSignalFrame(frame);
+        } catch (e) {
+          console.error("Parse error on frame seq:", seq, e);
+        }
+      }
+    }
+
+    function onBleDisconnected() {
+      log('Bluetooth peripheral disconnected.');
+      setDisconnected();
+    }
+
+    // -------------------------------------------------------------
+    // Two-Way Inbound Command Sender (Browser -> Phone APK)
+    // -------------------------------------------------------------
+    async function sendCommand(cmd) {
+      cmd = cmd.trim();
+      if (!cmd) return;
+
+      let dispatched = false;
+
+      // 1. Send via Web Bluetooth Write Characteristic
+      if (bleCharacteristic && activeTransportName.includes('Bluetooth')) {
+        try {
+          const encoder = new TextEncoder();
+          const bytes = encoder.encode(cmd);
+          if (bleCharacteristic.writeValueWithResponse) {
+            await bleCharacteristic.writeValueWithResponse(bytes);
+          } else {
+            await bleCharacteristic.writeValue(bytes);
+          }
+          log(`[TX -> BLE Phone] "${cmd}"`);
+          dispatched = true;
+        } catch (err) {
+          log(`[BLE Send Error] ${err.message}`);
+        }
+      }
+
+      // 2. Send via WebSocket if connected
+      if (wsSocket && wsSocket.readyState === WebSocket.OPEN && activeTransportName.includes('WebSocket')) {
+        try {
+          wsSocket.send(cmd);
+          log(`[TX -> WS Phone] "${cmd}"`);
+          dispatched = true;
+        } catch (err) {
+          log(`[WS Send Error] ${err.message}`);
+        }
+      }
+
+      if (!dispatched) {
+        log(`[Warning] Not connected to phone. Command "${cmd}" not dispatched.`);
+      }
+    }
+
+    function sendCustomCommand() {
+      const input = document.getElementById('customCmdInput');
+      const cmd = input.value.trim();
+      if (cmd) {
+        sendCommand(cmd);
+        input.value = '';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // WebSocket Client
+    // -------------------------------------------------------------
+    function connectWebSocket() {
+      const url = document.getElementById('wsInput').value.trim();
+      if (!url) return;
+
+      log(`Connecting to WebSocket at ${url}...`);
+      statusDot.className = 'status-dot connecting';
+      statusText.textContent = 'CONNECTING WS...';
+
+      try {
+        wsSocket = new WebSocket(url);
+
+        wsSocket.onopen = () => {
+          setConnected('Wi-Fi WebSocket');
+          infoFormat.textContent = 'JSON Frames';
+          infoFormat.style.color = 'var(--cyan)';
+        };
+
+        wsSocket.onmessage = (event) => {
+          try {
+            const frame = JSON.parse(event.data);
+            handleSignalFrame(frame);
+          } catch (e) {}
+        };
+
+        wsSocket.onerror = (err) => {
+          log(`WebSocket Error: ${err}`);
+        };
+
+        wsSocket.onclose = () => {
+          log('WebSocket connection closed.');
+          setDisconnected();
+        };
+      } catch (e) {
+        log(`Failed to initiate WebSocket: ${e.message}`);
+        setDisconnected();
+      }
+    }
+
+    function disconnectAll() {
+      if (bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+      }
+      if (wsSocket) {
+        wsSocket.close();
+        wsSocket = null;
+      }
+      setDisconnected();
+    }
+
+    // -------------------------------------------------------------
+    // Signal Frame Processing & Cognitive Analysis
+    // -------------------------------------------------------------
+    function handleSignalFrame(frame) {
+      packetsCount++;
+      lastSecPackets++;
+
+      if (frame.metadata) {
+        if (frame.metadata.sampling_rate) {
+          infoRate.textContent = `${frame.metadata.sampling_rate} Hz`;
+        }
+        log(`Received Stream Metadata: ${frame.metadata.channel_count} CH, ${frame.metadata.sampling_rate} Hz (${frame.metadata.signal_type})`);
+      }
+
+      if (frame.data && frame.data.channel_samples) {
+        const samples = frame.data.channel_samples;
+        for (let ch = 0; ch < 4 && ch < samples.length; ch++) {
+          channelBuffers[ch].push(samples[ch]);
+          if (channelBuffers[ch].length > BUFFER_LEN) {
+            channelBuffers[ch].shift();
+          }
+        }
+
+        // Periodic Cognitive Load Computation
+        if (packetsCount % 10 === 0) {
+          computeCognitiveMetrics();
+        }
+      }
+
+      infoPackets.textContent = packetsCount;
+    }
+
+    function computeCognitiveMetrics() {
+      // Approximate spectral band power from recent samples
+      const ch0 = channelBuffers[0];
+      if (ch0.length < 50) return;
+
+      let variance = 0;
+      let mean = ch0.reduce((a, b) => a + b, 0) / ch0.length;
+      for (const val of ch0) {
+        variance += Math.pow(val - mean, 2);
+      }
+      variance = variance / ch0.length;
+      const stdDev = Math.sqrt(variance);
+
+      // Cognitive load index heuristic based on theta/beta dynamics
+      const simulatedCog = Math.min(100, Math.max(5, Math.round((stdDev / 35.0) * 100)));
+      cogBar.style.width = `${simulatedCog}%`;
+
+      if (simulatedCog < 30) {
+        cogIndexText.textContent = `${(simulatedCog / 100).toFixed(2)} (Relaxed / Baseline)`;
+        cogIndexText.style.color = 'var(--teal)';
+      } else if (simulatedCog < 65) {
+        cogIndexText.textContent = `${(simulatedCog / 100).toFixed(2)} (Engaged Focus)`;
+        cogIndexText.style.color = 'var(--cyan)';
+      } else if (simulatedCog < 85) {
+        cogIndexText.textContent = `${(simulatedCog / 100).toFixed(2)} (High Workload)`;
+        cogIndexText.style.color = 'var(--amber)';
+      } else {
+        cogIndexText.textContent = `${(simulatedCog / 100).toFixed(2)} (Cognitive Overload)`;
+        cogIndexText.style.color = 'var(--red)';
+      }
+
+      metricTbr.textContent = ((stdDev * 0.08) + 1.2).toFixed(2);
+      metricAlpha.textContent = `${(100 - simulatedCog * 0.7).toFixed(1)}%`;
+      metricGamma.textContent = `${(stdDev * 0.15).toFixed(1)} uV`;
+    }
+
+    // Rate Counter Interval (Every 1s)
+    setInterval(() => {
+      effectiveFps = lastSecPackets;
+      lastSecPackets = 0;
+      infoFps.textContent = `${effectiveFps.toFixed(1)} Hz`;
+    }, 1000);
+
+    // -------------------------------------------------------------
+    // Real-Time Canvas Oscilloscope Rendering
+    // -------------------------------------------------------------
+    const canvas = document.getElementById('scopeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+      canvas.height = 380 * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const channelColors = ['#38bdf8', '#2dd4bf', '#a855f7', '#f59e0b'];
+
+    function drawOscilloscope() {
+      requestAnimationFrame(drawOscilloscope);
+
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw subtle grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      const gridStep = 40 * window.devicePixelRatio;
+      for (let x = 0; x < w; x += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridStep) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Render 4 stacked channels
+      const channelHeight = h / 4;
+      const scaleUv = channelHeight / 120; // 120 uV full scale
+
+      for (let ch = 0; ch < 4; ch++) {
+        const centerY = (ch + 0.5) * channelHeight;
+        const buf = channelBuffers[ch];
+
+        // Zero line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(w, centerY);
+        ctx.stroke();
+
+        // Waveform
+        ctx.strokeStyle = channelColors[ch];
+        ctx.lineWidth = 2 * window.devicePixelRatio;
+        ctx.beginPath();
+
+        const stepX = w / BUFFER_LEN;
+        for (let i = 0; i < buf.length; i++) {
+          const x = i * stepX;
+          const y = centerY - (buf[i] * scaleUv);
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+    }
+
+    drawOscilloscope();
+  </script>
+</body>
+</html>

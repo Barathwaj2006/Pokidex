@@ -11,7 +11,7 @@ void main() {
     test('Valid QR Payload parses successfully', () {
       final json = '''
       {
-        "protocol": "pyrosync-pokidex",
+        "protocol": "neurosim-pokidex",
         "version": 1,
         "session_id": "PX-8842",
         "host": "192.168.1.50",
@@ -36,21 +36,21 @@ void main() {
     });
 
     test('Unsupported version rejected', () {
-      final json = '{"protocol":"pyrosync-pokidex","version":99,"host":"192.168.1.1","port":8765,"session_id":"s1","token":"t1"}';
+      final json = '{"protocol":"neurosim-pokidex","version":99,"host":"192.168.1.1","port":8765,"session_id":"s1","token":"t1"}';
       final res = QrPairingPayload.parseAndValidate(json);
       expect(res.isValid, isFalse);
       expect(res.errorMessage, contains('Unsupported protocol version'));
     });
 
     test('Missing host rejected', () {
-      final json = '{"protocol":"pyrosync-pokidex","version":1,"port":8765,"session_id":"s1","token":"t1"}';
+      final json = '{"protocol":"neurosim-pokidex","version":1,"port":8765,"session_id":"s1","token":"t1"}';
       final res = QrPairingPayload.parseAndValidate(json);
       expect(res.isValid, isFalse);
       expect(res.errorMessage, contains('Missing host IP'));
     });
 
     test('Missing token rejected', () {
-      final json = '{"protocol":"pyrosync-pokidex","version":1,"host":"192.168.1.1","port":8765,"session_id":"s1"}';
+      final json = '{"protocol":"neurosim-pokidex","version":1,"host":"192.168.1.1","port":8765,"session_id":"s1"}';
       final res = QrPairingPayload.parseAndValidate(json);
       expect(res.isValid, isFalse);
       expect(res.errorMessage, contains('Missing authentication token'));
@@ -58,7 +58,7 @@ void main() {
 
     test('Expired QR timestamp rejected', () {
       final pastDate = DateTime.now().subtract(const Duration(hours: 1)).toIso8601String();
-      final json = '{"protocol":"pyrosync-pokidex","version":1,"host":"192.168.1.1","port":8765,"session_id":"s1","token":"t1","expires_at":"$pastDate"}';
+      final json = '{"protocol":"neurosim-pokidex","version":1,"host":"192.168.1.1","port":8765,"session_id":"s1","token":"t1","expires_at":"$pastDate"}';
       final res = QrPairingPayload.parseAndValidate(json);
       expect(res.isValid, isFalse);
       expect(res.errorMessage, contains('QR code has expired'));
@@ -95,16 +95,16 @@ void main() {
 
   group('3. Pokidex ClientWebSocketConnection Mutual Handshake Tests', () {
     test('Mutual Handshake connects, verifies token & session, and reaches READY step', () async {
-      // 1. Create a local mock WebSocket server simulating PyroSync
+      // 1. Create a local mock WebSocket server simulating NeuroSim Receiver
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 8769);
       server.listen((HttpRequest request) async {
         if (WebSocketTransformer.isUpgradeRequest(request)) {
           final socket = await WebSocketTransformer.upgrade(request);
-          // Step 1: PyroSync server sends HELLO
+          // Step 1: Receiver server sends HELLO
           socket.add(jsonEncode({
             'type': 'handshake',
             'action': 'HELLO',
-            'protocol': 'pyrosync-pokidex',
+            'protocol': 'neurosim-pokidex',
             'version': 1,
             'session_id': 'PX-TEST-8769',
           }));
@@ -114,14 +114,14 @@ void main() {
             final action = msg['action'];
 
             if (action == 'HELLO_ACK') {
-              // Step 3: PyroSync sends SESSION_ACCEPTED
+              // Step 3: Receiver sends SESSION_ACCEPTED
               socket.add(jsonEncode({
                 'type': 'handshake',
                 'action': 'SESSION_ACCEPTED',
                 'session_id': 'PX-TEST-8769',
               }));
             } else if (action == 'READY') {
-              // Step 5: PyroSync sends START_STREAM
+              // Step 5: Receiver sends START_STREAM
               socket.add(jsonEncode({
                 'type': 'handshake',
                 'action': 'START_STREAM',
@@ -133,7 +133,7 @@ void main() {
       });
 
       final payload = QrPairingPayload(
-        protocol: 'pyrosync-pokidex',
+        protocol: 'neurosim-pokidex',
         version: 1,
         sessionId: 'PX-TEST-8769',
         host: '127.0.0.1',

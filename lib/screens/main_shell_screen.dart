@@ -26,51 +26,61 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
-          ),
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentIndex != 0) {
+          setState(() {
+            _currentIndex = 0;
+          });
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard, color: AppColors.primaryAccent),
-              label: 'Home',
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              top: BorderSide(color: AppColors.border, width: 1),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart, color: AppColors.primaryAccent),
-              label: 'Analytics',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.waves_outlined),
-              activeIcon: Icon(Icons.waves, color: AppColors.primaryAccent),
-              label: 'Simulations',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_toggle_off_outlined),
-              activeIcon: Icon(Icons.history_toggle_off, color: AppColors.primaryAccent),
-              label: 'Progress',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings, color: AppColors.primaryAccent),
-              label: 'Settings',
-            ),
-          ],
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard_outlined),
+                activeIcon: Icon(Icons.dashboard, color: AppColors.primaryAccent),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.bar_chart_outlined),
+                activeIcon: Icon(Icons.bar_chart, color: AppColors.primaryAccent),
+                label: 'Analytics',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.waves_outlined),
+                activeIcon: Icon(Icons.waves, color: AppColors.primaryAccent),
+                label: 'Simulations',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.history_toggle_off_outlined),
+                activeIcon: Icon(Icons.history_toggle_off, color: AppColors.primaryAccent),
+                label: 'Progress',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.sensors_outlined),
+                activeIcon: Icon(Icons.sensors, color: AppColors.primaryAccent),
+                label: 'Connect',
+              ),
+            ],
+          ),
         ),
       ),
     );

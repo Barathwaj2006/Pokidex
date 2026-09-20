@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -7,6 +7,7 @@ import '../engines/erp_engine.dart';
 import '../engines/signal_engine.dart';
 import '../models/connection_state_step.dart';
 import '../models/eeg_config.dart';
+import '../models/patient_preset.dart';
 import '../models/qr_pairing_payload.dart';
 import '../models/signal_frame.dart';
 import '../models/transmission_diagnostics.dart';
@@ -72,11 +73,45 @@ class SignalProvider extends ChangeNotifier {
     required this.appState,
     required this.groundTruthService,
     required this.sessionService,
-  });
+  }) {
+    appState.addListener(_onAppStateChanged);
+  }
+
+  String? _lastBleCommand;
+  String? get lastBleCommand => _lastBleCommand;
+  String? _lastError;
+  String? get lastError => _lastError;
+
+  void _onAppStateChanged() {
+    if (_engine != null && _engine!.isRunning) {
+      if (_engine is EegEngine) {
+        (_engine as EegEngine).updateConfig(appState.eegConfig);
+      } else if (_engine is ErpEngine) {
+        (_engine as ErpEngine).updateConfigs(
+          newEegConfig: appState.eegConfig,
+          newErpConfig: appState.erpConfig,
+        );
+      }
+    }
+    if (_multiTransport != null) {
+      _multiTransport!.setWifiEnabled(appState.isWifiEnabled);
+      _multiTransport!.setBleEnabled(appState.isBleEnabled);
+    }
+    _bleTransport?.setFormat(appState.bleFormat);
+  }
 
   List<List<double>> get waveformBuffer => _waveformBuffer;
   int get channelCount => _channelCount;
   QrPairingPayload? get activeQrPayload => _activeQrPayload;
+
+  WebSocketTransport? get wifiTransport => _wifiTransport;
+  BlePeripheralTransport? get bleTransport => _bleTransport;
+  String? get localWifiIp => _wifiTransport?.primaryIp;
+  bool get isWifiActive => _multiTransport?.isWifiEnabled == true && _wifiTransport?.status != TransportStatus.stopped;
+  bool get isBleActive => _multiTransport?.isBleEnabled == true && _bleTransport?.status != TransportStatus.stopped;
+  int get bleConnectedCount => _bleTransport?.connectedClientCount ?? 0;
+  int get wifiConnectedCount => _wifiTransport?.connectedClientCount ?? 0;
+  BleStreamFormat get bleFormat => appState.bleFormat;
 
   bool get isServerRunning =>
       _transportStatus != TransportStatus.stopped &&
@@ -153,7 +188,7 @@ class SignalProvider extends ChangeNotifier {
 
     final success = await _clientConnection!.connectAndHandshake();
     if (success) {
-      _logInfo('[CONNECTED] PyroSync Handshake Complete & Verified Ready.');
+      _logInfo('[CONNECTED] Web / External Handshake Complete & Verified Ready.');
       await startStreaming();
     }
     return success;
@@ -175,7 +210,12 @@ class SignalProvider extends ChangeNotifier {
     _multiTransport?.dispose();
 
     _wifiTransport = WebSocketTransport(port: appState.wsPort);
-    _bleTransport = BlePeripheralTransport(deviceName: appState.bleDeviceName);
+    _wifiTransport!.commandStream.listen(_handleInboundBleCommand);
+    _bleTransport = BlePeripheralTransport(
+      deviceName: appState.bleDeviceName,
+      format: appState.bleFormat,
+    );
+    _bleTransport!.commandStream.listen(_handleInboundBleCommand);
 
     _multiTransport = MultiSignalTransport(
       wifiTransport: _wifiTransport!,
@@ -202,6 +242,82 @@ class SignalProvider extends ChangeNotifier {
     _wifiTransport = null;
     _bleTransport = null;
     _transportStatus = TransportStatus.stopped;
+    notifyListeners();
+  }
+
+  Future<bool> startBroadcasting() async {
+    _lastError = null;
+    try {
+      if (!isServerRunning) {
+        await startServer();
+      }
+      if (!appState.isStreaming) {
+        await startStreaming();
+      }
+      _setConnectionStep(ConnectionStateStep.streaming);
+      return true;
+    } catch (e) {
+      _lastError = e.toString();
+      _logInfo('[BROADCAST ERROR] $e');
+      _setConnectionStep(ConnectionStateStep.idle);
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> stopBroadcasting() async {
+    await stopStreaming();
+    await stopServer();
+    _setConnectionStep(ConnectionStateStep.idle);
+  }
+
+  Future<void> toggleWifi(bool enabled) async {
+    appState.setWifiEnabled(enabled);
+    if (_multiTransport != null) {
+      await _multiTransport!.setWifiEnabled(enabled);
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleBle(bool enabled) async {
+    appState.setBleEnabled(enabled);
+    if (_multiTransport != null) {
+      await _multiTransport!.setBleEnabled(enabled);
+    }
+    notifyListeners();
+  }
+
+  void setBleFormat(BleStreamFormat format) {
+    appState.setBleFormat(format);
+    _bleTransport?.setFormat(format);
+    notifyListeners();
+  }
+
+  void _handleInboundBleCommand(String cmd) {
+    _lastBleCommand = cmd;
+    _logInfo('[BLE REMOTE] Received command: "$cmd"');
+
+    final upper = cmd.trim().toUpperCase();
+    if (upper.startsWith('PRESET:')) {
+      final key = cmd.substring(7).trim();
+      final match = kPatientPresets.firstWhere(
+        (p) =>
+            p.id.toLowerCase() == key.toLowerCase() ||
+            p.title.toLowerCase().contains(key.toLowerCase()),
+        orElse: () => kPatientPresets.first,
+      );
+      appState.updateEegConfig(match.eegConfig);
+      appState.updateErpConfig(match.erpConfig);
+      _logInfo('[BLE REMOTE] Applied condition: ${match.title}');
+    } else if (upper == 'FORMAT:BIN' || upper == 'FORMAT:BINARY') {
+      setBleFormat(BleStreamFormat.binary);
+    } else if (upper == 'FORMAT:JSON') {
+      setBleFormat(BleStreamFormat.json);
+    } else if (upper == 'START') {
+      startStreaming();
+    } else if (upper == 'STOP') {
+      stopStreaming();
+    }
     notifyListeners();
   }
 
@@ -384,6 +500,7 @@ class SignalProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    appState.removeListener(_onAppStateChanged);
     _engine?.dispose();
     _rateTimer?.cancel();
     _clientConnection?.dispose();

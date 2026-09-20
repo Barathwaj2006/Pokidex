@@ -30,7 +30,7 @@ class ClientWebSocketConnection {
 
   Future<bool> connectAndHandshake({Duration timeout = const Duration(seconds: 5)}) async {
     _setStep(ConnectionStateStep.connecting);
-    _messageController.add('Connecting to PyroSync at ${payload.host}:${payload.port}...');
+    _messageController.add('Connecting to host at ${payload.host}:${payload.port}...');
 
     final wsUri = Uri.parse('ws://${payload.host}:${payload.port}');
 
@@ -38,15 +38,15 @@ class ClientWebSocketConnection {
       final socket = await WebSocket.connect(wsUri.toString()).timeout(timeout);
       _channel = IOWebSocketChannel(socket);
       _setStep(ConnectionStateStep.connected);
-      _messageController.add('✓ Connected to PyroSync socket');
+      _messageController.add('✓ Connected to host socket');
     } catch (e) {
       _setStep(ConnectionStateStep.networkUnreachable);
-      _messageController.add('Cannot reach PyroSync: $e');
+      _messageController.add('Cannot reach host: $e');
       return false;
     }
 
     _setStep(ConnectionStateStep.handshaking);
-    _messageController.add('Initiating mutual handshake with PyroSync...');
+    _messageController.add('Initiating mutual handshake with host...');
 
     final handshakeCompleter = Completer<bool>();
 
@@ -55,7 +55,7 @@ class ClientWebSocketConnection {
         _handleInboundMessage(data, handshakeCompleter);
       },
       onDone: () {
-        _handleDisconnect('Connection closed by PyroSync.');
+        _handleDisconnect('Connection closed by host.');
         if (!handshakeCompleter.isCompleted) {
           handshakeCompleter.complete(false);
         }
@@ -75,7 +75,7 @@ class ClientWebSocketConnection {
     } catch (_) {
       if (!handshakeCompleter.isCompleted) {
         _setStep(ConnectionStateStep.handshakeFailed);
-        _messageController.add('Handshake timed out waiting for PyroSync verification.');
+        _messageController.add('Handshake timed out waiting for host verification.');
         _disconnectSocket();
       }
       return false;
@@ -110,7 +110,7 @@ class ClientWebSocketConnection {
       } else if (effectiveAction == 'START_STREAM') {
         _handshakeComplete = true;
         _setStep(ConnectionStateStep.ready);
-        _messageController.add('✓ PyroSync VERIFIED & READY for signal stream');
+        _messageController.add('✓ Host VERIFIED & READY for signal stream');
         if (!handshakeCompleter.isCompleted) {
           handshakeCompleter.complete(true);
         }

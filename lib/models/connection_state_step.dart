@@ -1,4 +1,4 @@
-﻿enum ConnectionStateStep {
+enum ConnectionStateStep {
   idle,
   qrScanner,
   qrValidated,
@@ -24,11 +24,11 @@ extension ConnectionStateStepExtension on ConnectionStateStep {
       case ConnectionStateStep.qrScanner:
         return 'Scanning QR Code...';
       case ConnectionStateStep.qrValidated:
-        return 'PyroSync Found';
+        return 'Web / Host Found';
       case ConnectionStateStep.connecting:
         return 'Connecting...';
       case ConnectionStateStep.connected:
-        return '✓ Connected to PyroSync';
+        return '✓ Connected to Web / Host';
       case ConnectionStateStep.handshaking:
         return 'Handshaking...';
       case ConnectionStateStep.ready:
@@ -38,7 +38,7 @@ extension ConnectionStateStepExtension on ConnectionStateStep {
       case ConnectionStateStep.qrInvalid:
         return 'Invalid QR Code';
       case ConnectionStateStep.networkUnreachable:
-        return 'Cannot reach PyroSync';
+        return 'Cannot reach Host';
       case ConnectionStateStep.connectionFailed:
         return 'Connection Failed';
       case ConnectionStateStep.handshakeFailed:

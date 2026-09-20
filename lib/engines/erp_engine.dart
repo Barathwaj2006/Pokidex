@@ -9,8 +9,8 @@ import '../services/ground_truth_service.dart';
 import 'signal_engine.dart';
 
 class ErpEngine implements SignalEngine {
-  final EegConfig eegConfig;
-  final ErpConfig erpConfig;
+  EegConfig eegConfig;
+  ErpConfig erpConfig;
   final GroundTruthService groundTruthService;
   final String sessionId;
 
@@ -75,7 +75,7 @@ class ErpEngine implements SignalEngine {
     _trialN145Amplitude = erpConfig.n145.amplitudeUv;
 
     groundTruthService.add(GroundTruthEntry(
-      id: '_erp_trial',
+      id: '${sessionId}_erp_trial_$_trialIndex',
       timestamp: DateTime.now(),
       engineType: EngineType.erp,
       parameters: {
@@ -90,10 +90,10 @@ class ErpEngine implements SignalEngine {
         'jitter_percent': erpConfig.jitterPercent,
         ...erpConfig.toJson(),
       },
-      notes: 'VEP trial  triggered at '
-          't=s. '
-          'P100 latency=ms, '
-          'amplitude=uV',
+      notes: 'VEP trial #$_trialIndex triggered at '
+          't=${(_trialOnsetSample / eegConfig.samplingRate).toStringAsFixed(2)}s. '
+          'P100 latency=${(_trialP100Latency * 1000.0).toStringAsFixed(1)}ms, '
+          'amplitude=${_trialP100Amplitude.toStringAsFixed(1)}uV',
     ));
 
     _pendingEvents.add(SignalFrameEvent(
@@ -247,6 +247,27 @@ class ErpEngine implements SignalEngine {
     _sampleTimer = null;
     _isiTimer = null;
     _running = false;
+  }
+
+  void updateConfigs({EegConfig? newEegConfig, ErpConfig? newErpConfig}) {
+    if (newEegConfig != null) {
+      final oldSamplingRate = eegConfig.samplingRate;
+      eegConfig = newEegConfig;
+      if (_running && oldSamplingRate != newEegConfig.samplingRate) {
+        _sampleTimer?.cancel();
+        final intervalUs = (1000000 / eegConfig.samplingRate).round();
+        _sampleTimer = Timer.periodic(
+          Duration(microseconds: intervalUs),
+          _onSampleTick,
+        );
+      }
+    }
+    if (newErpConfig != null) {
+      erpConfig = newErpConfig;
+      if (_running && !erpConfig.manualTriggerOnly) {
+        _startIsiTimer();
+      }
+    }
   }
 
   @override

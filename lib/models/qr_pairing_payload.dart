@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 class QrPayloadValidationResult {
   final bool isValid;
@@ -48,9 +48,10 @@ class QrPairingPayload {
     }
 
     final protocol = json['protocol'] as String?;
-    if (protocol != 'pyrosync-pokidex' && protocol != 'pyrosync') {
+    final validProtocols = ['neurosim-pokidex', 'neurosim', 'pokidex', 'bci-sync', 'websocket'];
+    if (protocol == null || (!validProtocols.contains(protocol.toLowerCase()) && !protocol.toLowerCase().contains('pokidex') && !protocol.toLowerCase().contains('neuro'))) {
       return QrPayloadValidationResult.failure(
-        'Invalid protocol "$protocol". Expected "pyrosync-pokidex".',
+        'Invalid protocol "$protocol". Expected valid telemetry protocol.',
       );
     }
 
@@ -86,7 +87,7 @@ class QrPairingPayload {
       try {
         expiresAt = DateTime.parse(json['expires_at'].toString());
         if (DateTime.now().isAfter(expiresAt)) {
-          return const QrPayloadValidationResult.failure('QR code has expired. Please refresh the QR on PyroSync.');
+          return const QrPayloadValidationResult.failure('QR code has expired. Please refresh the QR code.');
         }
       } catch (_) {
         return const QrPayloadValidationResult.failure('Invalid expiration timestamp in QR payload.');

@@ -33,7 +33,7 @@ class SimulationsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Banner for Pyromatix & NeuroSync
+          // Banner for Neural Signal Simulation
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -50,7 +50,7 @@ class SimulationsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'PYROMATIX & NEUROSYNC INPUT CONTROLLER',
+                        'NEURAL SIGNAL SIMULATION CONTROLLER',
                         style: TextStyle(
                           color: Colors.cyanAccent,
                           fontWeight: FontWeight.bold,

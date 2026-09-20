@@ -8,7 +8,7 @@ import '../services/ground_truth_service.dart';
 import 'signal_engine.dart';
 
 class EegEngine implements SignalEngine {
-  final EegConfig config;
+  EegConfig config;
   final GroundTruthService groundTruthService;
   final String sessionId;
 
@@ -205,7 +205,7 @@ class EegEngine implements SignalEngine {
 
   void _logGroundTruth() {
     groundTruthService.add(GroundTruthEntry(
-      id: '_eeg_',
+      id: '${sessionId}_eeg_$_sampleIndex',
       timestamp: DateTime.now(),
       engineType: EngineType.eeg,
       parameters: {
@@ -215,7 +215,7 @@ class EegEngine implements SignalEngine {
         'blink_active': _blinkActive,
         'emg_active': _emgActive,
       },
-      notes: 'EEG snapshot at t=s',
+      notes: 'EEG snapshot at t=${(_sampleIndex / config.samplingRate).toStringAsFixed(2)}s',
     ));
   }
 
@@ -224,6 +224,25 @@ class EegEngine implements SignalEngine {
     _timer?.cancel();
     _timer = null;
     _running = false;
+  }
+
+  void updateConfig(EegConfig newConfig) {
+    final oldSamplingRate = config.samplingRate;
+    final oldChannelCount = config.channelCount;
+    config = newConfig;
+
+    if (oldChannelCount != newConfig.channelCount) {
+      _initState();
+    }
+
+    if (_running && oldSamplingRate != newConfig.samplingRate) {
+      _timer?.cancel();
+      final intervalUs = (1000000 / config.samplingRate).round();
+      _timer = Timer.periodic(
+        Duration(microseconds: intervalUs),
+        _onTick,
+      );
+    }
   }
 
   @override

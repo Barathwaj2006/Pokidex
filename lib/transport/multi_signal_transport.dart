@@ -6,7 +6,7 @@ import 'signal_transport.dart';
 import 'websocket_transport.dart';
 
 /// Composite SignalTransport that runs WebSocket (Wi-Fi) and BLE Peripheral
-/// concurrently and independently for research latency & reliability comparison.
+/// concurrently or individually based on user selection.
 class MultiSignalTransport implements SignalTransport {
   final WebSocketTransport wifiTransport;
   final BlePeripheralTransport bleTransport;
@@ -16,6 +16,7 @@ class MultiSignalTransport implements SignalTransport {
 
   bool _isWifiEnabled = true;
   bool _isBleEnabled = true;
+  bool _isRunning = false;
 
   MultiSignalTransport({
     required this.wifiTransport,
@@ -31,12 +32,28 @@ class MultiSignalTransport implements SignalTransport {
   bool get isWifiEnabled => _isWifiEnabled;
   bool get isBleEnabled => _isBleEnabled;
 
-  void setWifiEnabled(bool enabled) {
+  Future<void> setWifiEnabled(bool enabled) async {
     _isWifiEnabled = enabled;
+    if (_isRunning) {
+      if (enabled && wifiTransport.status == TransportStatus.stopped) {
+        await wifiTransport.start();
+      } else if (!enabled && wifiTransport.status != TransportStatus.stopped) {
+        await wifiTransport.stop();
+      }
+      _updateCompositeStatus();
+    }
   }
 
-  void setBleEnabled(bool enabled) {
+  Future<void> setBleEnabled(bool enabled) async {
     _isBleEnabled = enabled;
+    if (_isRunning) {
+      if (enabled && bleTransport.status == TransportStatus.stopped) {
+        await bleTransport.start();
+      } else if (!enabled && bleTransport.status != TransportStatus.stopped) {
+        await bleTransport.stop();
+      }
+      _updateCompositeStatus();
+    }
   }
 
   void _updateCompositeStatus() {
@@ -55,7 +72,9 @@ class MultiSignalTransport implements SignalTransport {
     } else if (wifiStatus == TransportStatus.error &&
         bleStatus == TransportStatus.error) {
       _setStatus(TransportStatus.error);
-    } else {
+    } else if (!_isWifiEnabled && !_isBleEnabled) {
+      _setStatus(TransportStatus.stopped);
+    } else if (wifiStatus == TransportStatus.stopped && bleStatus == TransportStatus.stopped) {
       _setStatus(TransportStatus.stopped);
     }
   }
@@ -83,7 +102,8 @@ class MultiSignalTransport implements SignalTransport {
 
   @override
   int get connectedClientCount =>
-      wifiTransport.connectedClientCount + bleTransport.connectedClientCount;
+      (_isWifiEnabled ? wifiTransport.connectedClientCount : 0) +
+      (_isBleEnabled ? bleTransport.connectedClientCount : 0);
 
   @override
   Stream<TransportStatus> get statusStream => _statusController.stream;
@@ -93,15 +113,19 @@ class MultiSignalTransport implements SignalTransport {
 
   @override
   Future<void> start() async {
+    _isRunning = true;
     final futures = <Future>[];
     if (_isWifiEnabled) futures.add(wifiTransport.start());
     if (_isBleEnabled) futures.add(bleTransport.start());
-    await Future.wait(futures);
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
     _updateCompositeStatus();
   }
 
   @override
   Future<void> stop() async {
+    _isRunning = false;
     await wifiTransport.stop();
     await bleTransport.stop();
     _updateCompositeStatus();
@@ -124,7 +148,7 @@ class MultiSignalTransport implements SignalTransport {
 
     if (sentTransports.isNotEmpty && frame.data != null) {
       _infoController.add(
-        '[DUAL LOG] Seq #${frame.data!.sequence} dispatched via [${sentTransports.join(', ')}] @ t=$nowMs',
+        '[WIRELESS LOG] Seq #${frame.data!.sequence} dispatched via [${sentTransports.join(', ')}] @ t=$nowMs',
       );
     }
   }

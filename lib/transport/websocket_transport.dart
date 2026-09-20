@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:shelf/shelf.dart' as shelf;
@@ -14,10 +14,12 @@ class WebSocketTransport implements SignalTransport {
 
   final _statusController = StreamController<TransportStatus>.broadcast();
   final _infoController = StreamController<String>.broadcast();
+  final _commandController = StreamController<String>.broadcast();
 
   final List<WebSocketChannel> _clients = [];
   HttpServer? _server;
   TransportStatus _status = TransportStatus.stopped;
+  String? _primaryIp;
 
   WebSocketTransport({this.port = 8765});
 
@@ -27,11 +29,15 @@ class WebSocketTransport implements SignalTransport {
   @override
   int get connectedClientCount => _clients.length;
 
+  String? get primaryIp => _primaryIp;
+
   @override
   Stream<TransportStatus> get statusStream => _statusController.stream;
 
   @override
   Stream<String> get infoStream => _infoController.stream;
+
+  Stream<String> get commandStream => _commandController.stream;
 
   @override
   Future<void> start() async {
@@ -43,11 +49,15 @@ class WebSocketTransport implements SignalTransport {
       final handler = webSocketHandler((WebSocketChannel channel) {
         _clients.add(channel);
         _setStatus(TransportStatus.connected);
-        _infoController.add('[WebSocket] Pyromatix / NeuroSync Client Connected (Total: ${_clients.length})');
+        _infoController.add('[WebSocket] Web / External Client Connected (Total: ${_clients.length})');
 
         channel.stream.listen(
           (msg) {
-            // Keep-alive or inbound telemetry commands
+            if (msg is String && msg.trim().isNotEmpty) {
+              final trimmed = msg.trim();
+              _commandController.add(trimmed);
+              _infoController.add('[WebSocket RECV] Command: "$trimmed"');
+            }
           },
           onDone: () {
             _clients.remove(channel);
@@ -77,7 +87,10 @@ class WebSocketTransport implements SignalTransport {
       _setStatus(TransportStatus.waiting);
 
       final ips = await _getLocalIps();
-      final wsUrls = ips.map((ip) => 'ws://$ip:$port').join(', ');
+      if (ips.isNotEmpty) {
+        _primaryIp = ips.first;
+      }
+      final wsUrls = ips.isNotEmpty ? ips.map((ip) => 'ws://$ip:$port').join(', ') : 'ws://0.0.0.0:$port';
       _infoController.add('[WebSocket] Server active — $wsUrls');
     } catch (e) {
       _setStatus(TransportStatus.error);
@@ -146,5 +159,6 @@ class WebSocketTransport implements SignalTransport {
     stop();
     _statusController.close();
     _infoController.close();
+    _commandController.close();
   }
 }

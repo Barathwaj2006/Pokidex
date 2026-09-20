@@ -8,8 +8,8 @@ import 'package:pokidex/models/signal_frame.dart';
 import 'package:pokidex/transport/client_websocket_connection.dart';
 
 void main() {
-  group('Pokidex ↔ PyroSync Live End-to-End Network Connectivity & Handshake Verification', () {
-    late HttpServer mockPyroSyncServer;
+  group('Pokidex ↔ Web Receiver Live End-to-End Network Connectivity & Handshake Verification', () {
+    late HttpServer mockReceiverServer;
     late List<WebSocket> activeSockets;
     late String testToken;
     late String testSessionId;
@@ -19,20 +19,20 @@ void main() {
       testToken = 'A1B2C3D4E5F67890';
       testSessionId = 'PX-TEST-SESSION-999';
 
-      // Bind real PyroSync QR Pairing WebSocket Server on localhost port 8768
-      mockPyroSyncServer = await HttpServer.bind(InternetAddress.loopbackIPv4, 8768);
+      // Bind real Web Receiver QR Pairing WebSocket Server on localhost port 8768
+      mockReceiverServer = await HttpServer.bind(InternetAddress.loopbackIPv4, 8768);
     });
 
     tearDown(() async {
       for (final ws in activeSockets) {
         await ws.close();
       }
-      await mockPyroSyncServer.close(force: true);
+      await mockReceiverServer.close(force: true);
     });
 
     test('1. Full E2E Mutual Handshake & SignalFrame TCP Stream Verification', () async {
       final String qrJson = jsonEncode({
-        'protocol': 'pyrosync-pokidex',
+        'protocol': 'neurosim-pokidex',
         'version': 1,
         'session_id': testSessionId,
         'host': '127.0.0.1',
@@ -56,8 +56,8 @@ void main() {
       final Completer<bool> serverHandshakeCompleted = Completer<bool>();
       final List<Map<String, dynamic>> receivedSignalFrames = [];
 
-      // Server-side behavior simulating PyroSync PokidexQrPairingServer
-      mockPyroSyncServer.listen((HttpRequest request) async {
+      // Server-side behavior simulating Web Receiver PokidexQrPairingServer
+      mockReceiverServer.listen((HttpRequest request) async {
         if (WebSocketTransformer.isUpgradeRequest(request)) {
           final socket = await WebSocketTransformer.upgrade(request);
           activeSockets.add(socket);
@@ -66,7 +66,7 @@ void main() {
           socket.add(jsonEncode({
             'type': 'handshake',
             'action': 'HELLO',
-            'protocol': 'pyrosync-pokidex',
+            'protocol': 'neurosim-pokidex',
             'version': 1,
             'session_id': testSessionId,
           }));

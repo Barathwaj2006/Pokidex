@@ -1,15 +1,15 @@
-﻿<div align="center">
+<div align="center">
 
 # ⚡ POKIDEX
 ### High-Performance Neural Telemetry, Signal Synthesis & BCI Connectivity Platform
-#### Official Hardware & Pipeline Integration Companion for Pyromatix & NeuroSync Systems
+#### Official Hardware & Telemetry Streaming Companion for NeuroSim & Cognitive Load Analysis
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![Platform: Android](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Desktop-green.svg?style=for-the-badge)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**POKIDEX** is a next-generation biomedical research platform designed specifically for real-time biopotential signal generation, instant QR code hardware connectivity, multi-channel EEG/ERP telemetry streaming, and clinical patient condition simulations. Built to seamlessly integrate with **Pyromatix** and **NeuroSync** BCI pipelines.
+**POKIDEX** is a next-generation biomedical research platform designed specifically for real-time biopotential signal generation, instant QR code hardware connectivity, multi-channel EEG/ERP telemetry streaming, and clinical patient condition simulations. Built to seamlessly integrate with **NeuroSim** and Cognitive Load Analysis platforms.
 
 [Explore Features](#-key-features) • [Instant QR Pairing](#-instant-qr-code-connectivity) • [Patient Condition Presets](#-20-clinical-patient-condition-presets) • [Architecture](#-system-architecture) • [Getting Started](#-getting-started)
 
@@ -40,7 +40,7 @@
 **POKIDEX** (Biomedical Signal Synthesizer & Telemetry Terminal) is an advanced, cross-platform software ecosystem engineered to solve a fundamental challenge in Brain-Computer Interface (BCI) research: **testing, calibrating, and validating real-time neural decoding pipelines without requiring continuous human subjects or physical hardware electrodes**.
 
 ### 🎯 What Pokidex Accomplishes
-In modern neuroscience and BCI development, software pipelines like **Pyromatix** (signal processing, filtering, and machine learning feature extraction) and **NeuroSync** (real-time neural feedback & stimulus presentation) require continuous streams of high-frequency bio-potential data. POKIDEX serves as an intelligent, controllable bio-signal generator and acquisition node that broadcasts mathematically authentic multi-channel electroencephalogram (EEG) and visual evoked potential (ERP/VEP) data streams.
+In modern neuroscience and cognitive workload analysis, research platforms like **NeuroSim** require continuous streams of high-frequency bio-potential data. POKIDEX serves as an intelligent, controllable bio-signal generator and acquisition node that broadcasts mathematically authentic multi-channel electroencephalogram (EEG) and visual evoked potential (ERP/VEP) data streams.
 
 ### 🧠 Core Capabilities & Scientific Precision
 1. **Mathematical Waveform Synthesis**:
@@ -54,7 +54,7 @@ In modern neuroscience and BCI development, software pipelines like **Pyromatix*
 
 3. **Camera-Based Instant QR Code Connectivity**:
    - Eliminates manual IP configuration and Bluetooth discovery delays.
-   - Users scan the QR code displayed on the **Pyromatix** or **NeuroSync** terminal using the built-in live camera viewfinder (`mobile_scanner`).
+   - Users scan the QR code displayed on the **NeuroSim** terminal using the built-in live camera viewfinder (`mobile_scanner`).
    - Pokidex instantly parses the pairing payload, initializes embedded TCP WebSockets (`shelf_web_socket`), and activates real-time signal transmission, data acquisition, and spectral breakdown.
 
 4. **Biomedical Analytics & Ground-Truth Event Logging**:
@@ -65,7 +65,7 @@ In modern neuroscience and BCI development, software pipelines like **Pyromatix*
 
 ## 🌟 Overview & Purpose
 
-**POKIDEX** bridges the gap between synthetic neural signal generation and live biomedical execution pipelines like **Pyromatix** and **NeuroSync**. Whether simulating pathological brain states for machine learning validation or streaming live multi-channel EEG/VEP telemetry across local sockets, POKIDEX offers a sleek, high-precision environment for researchers, BCI engineers, and neuroscientists.
+**POKIDEX** bridges the gap between synthetic neural signal generation and live biomedical execution platforms like **NeuroSim**. Whether simulating pathological brain states for cognitive workload validation or streaming live multi-channel EEG/VEP telemetry across local sockets and Bluetooth LE, POKIDEX offers a sleek, high-precision environment for researchers, BCI engineers, and neuroscientists.
 
 With zero startup lag, instant camera-based QR pairing, and 20 calibrated clinical patient condition presets, POKIDEX eliminates manual configuration and delivers instant signal acquisition and analysis.
 
@@ -73,7 +73,7 @@ With zero startup lag, instant camera-based QR pairing, and 20 calibrated clinic
 
 ## ✨ Key Features
 
-- 📷 **Camera QR Code Connectivity**: Instant pairing with Pyromatix and NeuroSync terminals via live camera QR code scanning (`mobile_scanner`).
+- 📷 **Camera QR Code Connectivity**: Instant pairing with NeuroSim terminals via live camera QR code scanning (`mobile_scanner`).
 - 🧠 **20 Clinical Patient Presets**: Pre-calibrated physiological conditions (Epilepsy, ADHD, Alzheimer's, Sleep N3/REM, Parkinson's, Schizophrenia, TBI, Propofol Anesthesia, etc.) with live waveform preview graphs.
 - ⚡ **Multi-Engine Signal Synthesis**: Real-time generation of multi-channel EEG (Alpha, Beta, Theta, Delta, Gamma) and ERP/VEP (Event-Related Potentials: N75, P100, N145) with custom noise and artifact controls.
 - 📡 **Dual Transport Broadcast**: Embedded low-latency WebSocket TCP server (`shelf_web_socket`) and BLE Peripheral simulation for real-time packet delivery.
@@ -87,11 +87,11 @@ With zero startup lag, instant camera-based QR pairing, and 20 calibrated clinic
 Instead of manual IP entry or lengthy device searches, POKIDEX features an instant **Camera QR Code Connectivity Scanner**:
 
 1. Tap the **Settings / Connection** tab or notification bar.
-2. Direct your phone camera at the QR code displayed on your **Pyromatix** or **NeuroSync** BCI screen.
+2. Direct your phone camera at the QR code displayed on your **NeuroSim** screen.
 3. The camera instantly reads the pairing payload, establishes local transport sockets, and begins live signal transmission and acquisition automatically.
 
 ```text
-[Pyromatix / NeuroSync Screen] ---> (Displays QR Code) 
+[NeuroSim Web Screen] ----------> (Displays QR Code) 
                                            │
                                            ▼ (Camera Scanned via Pokidex)
 [Pokidex Mobile App] ---------> (Establishes Transport & Starts Stream)
@@ -238,5 +238,5 @@ graph TD
 Distributed under the **MIT License**. See `LICENSE` for details.
 
 <div align="center">
-  <sub>Designed & Developed by <a href="https://github.com/Barathwaj2006">Barathwaj</a> for Pyromatix & NeuroSync BCI Systems.</sub>
+  <sub>Designed & Developed by <a href="https://github.com/Barathwaj2006">Barathwaj</a> for NeuroSim & Cognitive Load BCI Systems.</sub>
 </div>
