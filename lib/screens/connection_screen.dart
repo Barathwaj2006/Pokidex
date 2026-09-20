@@ -7,6 +7,7 @@ import '../models/connection_state_step.dart';
 import '../providers/app_state_provider.dart';
 import '../providers/signal_provider.dart';
 import '../theme/app_theme.dart';
+import '../transport/ble_peripheral_transport.dart';
 
 class ConnectionScreen extends StatefulWidget {
   const ConnectionScreen({super.key});

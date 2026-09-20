@@ -258,14 +258,14 @@ class ErpEngine implements SignalEngine {
         final intervalUs = (1000000 / eegConfig.samplingRate).round();
         _sampleTimer = Timer.periodic(
           Duration(microseconds: intervalUs),
-          _onSampleTick,
+          _onTick,
         );
       }
     }
     if (newErpConfig != null) {
       erpConfig = newErpConfig;
-      if (_running && !erpConfig.manualTriggerOnly) {
-        _startIsiTimer();
+      if (_running && erpConfig.triggerMode != TriggerMode.manual) {
+        _scheduleNextIsiTrigger();
       }
     }
   }
